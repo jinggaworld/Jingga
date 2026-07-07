@@ -10,6 +10,7 @@ import karyaRoutes from './routes/karya';
 import stellarRoutes from './routes/stellar';
 import marketplaceRoutes from './routes/marketplace';
 import paymentRoutes from './routes/payments';
+import dashboardRoutes from './routes/dashboard';
 
 const app: express.Express = express();
 const PORT = process.env.PORT || 3001;
@@ -30,6 +31,7 @@ app.use('/api/v1/karya', karyaRoutes);
 app.use('/api/v1', stellarRoutes);
 app.use('/api/v1/marketplace', marketplaceRoutes);
 app.use('/api/v1/payments', paymentRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
 
 // Health check
 app.get('/api/v1/health', (_req, res) => {
