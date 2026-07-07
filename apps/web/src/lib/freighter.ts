@@ -1,24 +1,33 @@
 import { STELLAR_NETWORK_PASSPHRASE } from '@jingga/shared';
 
-let FreighterApi: any = null;
+let freighterApi: any = null;
 
 // Dynamically import Freighter (browser-only)
 async function getFreighter() {
-  if (!FreighterApi) {
+  if (!freighterApi) {
     try {
-      FreighterApi = await import('@stellar/freighter-api');
+      const mod = await import('@stellar/freighter-api');
+      freighterApi = mod.default || mod;
     } catch {
       return null;
     }
   }
-  return FreighterApi;
+  return freighterApi;
 }
 
 export async function isFreighterInstalled(): Promise<boolean> {
+  // Check if window.freighter exists (extension injected)
+  if (typeof window !== 'undefined' && (window as any).freighter) {
+    return true;
+  }
+  // Fallback: try the API module
   const freighter = await getFreighter();
   if (!freighter) return false;
   try {
-    return await freighter.isConnected();
+    if (typeof freighter.isConnected === 'function') {
+      return await freighter.isConnected();
+    }
+    return false;
   } catch {
     return false;
   }
@@ -27,25 +36,61 @@ export async function isFreighterInstalled(): Promise<boolean> {
 export async function getPublicKey(): Promise<string> {
   const freighter = await getFreighter();
   if (!freighter) throw new Error('Freighter is not installed');
-  return await freighter.getAddress();
-}
 
-export async function signTransaction(xdr: string): Promise<string> {
-  const freighter = await getFreighter();
-  if (!freighter) throw new Error('Freighter is not installed');
-  const result = await freighter.signTx(xdr, STELLAR_NETWORK_PASSPHRASE);
-  return result.signedTx;
-}
-
-export async function signMessage(message: string): Promise<string> {
-  const freighter = await getFreighter();
-  if (!freighter) throw new Error('Freighter is not installed');
-  // Freighter may not have signMessage, use signTx as fallback
-  if (freighter.signMessage) {
-    return await freighter.signMessage(message);
+  // v2 API uses getPublicKey()
+  if (typeof freighter.getPublicKey === 'function') {
+    return await freighter.getPublicKey();
   }
-  // Fallback: sign a transaction with the message as memo
-  return '';
+
+  // Fallback: check window.freighter directly
+  if (typeof (window as any).freighter?.getPublicKey === 'function') {
+    return await (window as any).freighter.getPublicKey();
+  }
+
+  throw new Error('Freighter is not installed or getPublicKey is not available');
+}
+
+export async function signTransaction(xdr: string, network?: string): Promise<string> {
+  const freighter = await getFreighter();
+  if (!freighter) throw new Error('Freighter is not installed');
+
+  const networkPassphrase = network || STELLAR_NETWORK_PASSPHRASE;
+
+  // v2 API uses signTransaction(xdr, { network })
+  if (typeof freighter.signTransaction === 'function') {
+    const result = await freighter.signTransaction(xdr, { network: networkPassphrase });
+    return typeof result === 'string' ? result : result.signedTx || result.signedTransaction || result;
+  }
+
+  // Fallback: try signTx
+  if (typeof freighter.signTx === 'function') {
+    const result = await freighter.signTx(xdr, networkPassphrase);
+    return typeof result === 'string' ? result : result.signedTx || result;
+  }
+
+  throw new Error('Freighter signTransaction is not available');
+}
+
+export async function signAuthEntry(entryXdr: string): Promise<string> {
+  const freighter = await getFreighter();
+  if (!freighter) throw new Error('Freighter is not installed');
+
+  if (typeof freighter.signAuthEntry === 'function') {
+    return await freighter.signAuthEntry(entryXdr);
+  }
+
+  throw new Error('Freighter signAuthEntry is not available');
+}
+
+export async function requestAccess(): Promise<boolean> {
+  const freighter = await getFreighter();
+  if (!freighter) return false;
+
+  if (typeof freighter.requestAccess === 'function') {
+    return await freighter.requestAccess();
+  }
+
+  return false;
 }
 
 export function truncateAddress(address: string, chars = 4): string {
