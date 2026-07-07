@@ -44,6 +44,8 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 const TOKEN_KEY = 'jingga_auth_token';
 const WALLET_KEY = 'jingga_wallet_address';
 const AUTH_METHOD_KEY = 'jingga_auth_method';
@@ -73,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setWalletAddress(savedWallet);
       setAuthMethod(savedMethod);
       // Verify token
-      fetch('/api/v1/auth/me', {
+      fetch(`${API_BASE}/api/v1/auth/me`, {
         headers: { Authorization: `Bearer ${savedToken}` },
       })
         .then((res) => res.json())
@@ -106,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const publicKey = await getPublicKey();
 
-      const challengeRes = await fetch('/api/v1/auth/challenge', {
+      const challengeRes = await fetch(`${API_BASE}/api/v1/auth/challenge`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ publicKey }),
@@ -117,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { challenge, nonce } = await challengeRes.json();
       const signedMessage = challenge;
 
-      const verifyRes = await fetch('/api/v1/auth/verify', {
+      const verifyRes = await fetch(`${API_BASE}/api/v1/auth/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ publicKey, signedMessage, nonce }),
@@ -151,7 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
-      const res = await fetch('/api/v1/auth/register', {
+      const res = await fetch(`${API_BASE}/api/v1/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, nama, password }),
@@ -186,7 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
-      const res = await fetch('/api/v1/auth/login', {
+      const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
