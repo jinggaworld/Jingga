@@ -58,8 +58,7 @@ export async function signTransaction(xdr: string, network?: string): Promise<st
 
   // v2 API uses signTransaction(xdr, { network })
   if (typeof freighter.signTransaction === 'function') {
-    const result = await freighter.signTransaction(xdr, { network: networkPassphrase });
-    return typeof result === 'string' ? result : result.signedTx || result.signedTransaction || result;
+    return await freighter.signTransaction(xdr, { network: networkPassphrase });
   }
 
   // Fallback: try signTx

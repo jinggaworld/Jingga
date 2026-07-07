@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import {
   isFreighterInstalled,
   getPublicKey,
+  requestAccess,
   truncateAddress,
 } from '@/lib/freighter';
 
@@ -106,6 +107,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
+      // Request access first (required by Freighter v2)
+      await requestAccess();
       const publicKey = await getPublicKey();
 
       const challengeRes = await fetch(`${API_BASE}/api/v1/auth/challenge`, {
