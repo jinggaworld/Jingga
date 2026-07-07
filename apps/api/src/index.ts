@@ -11,6 +11,7 @@ import stellarRoutes from './routes/stellar';
 import marketplaceRoutes from './routes/marketplace';
 import paymentRoutes from './routes/payments';
 import dashboardRoutes from './routes/dashboard';
+import readerRoutes from './routes/reader';
 
 const app: express.Express = express();
 const PORT = process.env.PORT || 3001;
@@ -32,6 +33,7 @@ app.use('/api/v1', stellarRoutes);
 app.use('/api/v1/marketplace', marketplaceRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/reader', readerRoutes);
 
 // Health check
 app.get('/api/v1/health', (_req, res) => {
