@@ -4,7 +4,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 function getAuthHeaders(): Record<string, string> {
   if (typeof window === 'undefined') return {};
-  const token = localStorage.getItem('jingga_token');
+  const token = localStorage.getItem('jingga_auth_token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
