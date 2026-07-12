@@ -390,22 +390,31 @@ export async function submitSorobanTransaction(
     preparedTx.sign(keypair);
 
     const result = await rpcServer.sendTransaction(preparedTx);
+    const txHash = result.hash;
 
-    // Poll for completion
-    let status = result.status;
+    if (result.status === 'error') {
+      return { success: false, error: `Transaction error: ${result.errorString || 'Unknown error'}`, txHash };
+    }
+
+    // Poll for completion (up to 60 detik)
+    let status: string = result.status;
     let attempts = 0;
-    while (status === 'pending' && attempts < 30) {
+    while ((status === 'pending' || status === 'not_found') && attempts < 60) {
       await new Promise((r) => setTimeout(r, 1000));
-      const pollResult = await rpcServer.getTransaction(result.hash);
-      status = pollResult.status;
+      try {
+        const pollResult = await rpcServer.getTransaction(txHash);
+        status = pollResult.status;
+      } catch {
+        status = 'not_found';
+      }
       attempts++;
     }
 
     if (status === 'success') {
-      return { success: true, txHash: result.hash };
+      return { success: true, txHash };
     }
 
-    return { success: false, error: `Transaction failed with status: ${status}` };
+    return { success: false, error: `Transaction failed with status: ${status}`, txHash };
   } catch (error: any) {
     console.error(`[Soroban] Submit error (${method}):`, error);
     return {
@@ -726,24 +735,41 @@ export async function submitSignedSorobanTx(
 
     // Submit to Soroban RPC
     const result = await rpcServer.sendTransaction(transaction);
+    const txHash = result.hash;
 
-    // Poll for completion
-    let status = result.status;
+    if (result.status === 'error') {
+      return { success: false, error: `Transaction error: ${result.errorString || 'Unknown error'}`, txHash };
+    }
+
+    // Poll for completion (up to 60 detik — testnet bisa lambat)
+    // NOTE: getTransaction awal bisa return 'not_found' sebelum transaksi
+    // diproses oleh Soroban RPC. Kita harus terus polling selama masih
+    // 'pending' ATAU 'not_found'.
+    let status: string = result.status;
     let attempts = 0;
-    while (status === 'pending' && attempts < 30) {
+    while ((status === 'pending' || status === 'not_found') && attempts < 60) {
       await new Promise((r) => setTimeout(r, 1000));
-      const pollResult = await rpcServer.getTransaction(result.hash);
-      status = pollResult.status;
+      try {
+        const pollResult = await rpcServer.getTransaction(txHash);
+        status = pollResult.status;
+      } catch {
+        // getTransaction bisa throw jika txHash belum dikenal — skip, coba lagi
+        status = 'not_found';
+      }
       attempts++;
     }
 
     if (status === 'success') {
-      return { success: true, txHash: result.hash };
+      console.log(`[Soroban] Transaction confirmed: ${txHash}`);
+      return { success: true, txHash };
     }
 
+    // Return txHash even on failure so user can check on Stellar Expert
+    console.warn(`[Soroban] Transaction ${txHash} final status: ${status}`);
     return {
       success: false,
       error: `Transaction failed with status: ${status}`,
+      txHash,
     };
   } catch (error: any) {
     console.error('[Soroban] Submit signed error:', error);
