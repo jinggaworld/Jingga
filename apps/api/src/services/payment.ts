@@ -10,6 +10,10 @@ export const PAYMENT_ERRORS = {
   ACCOUNT_NOT_FOUND: { code: 'ACCOUNT_NOT_FOUND', message: 'Wallet belum teraktivasi di Stellar network. Fund dulu via Dashboard > Fund Wallet atau https://friendbot.stellar.org?addr=WALLET_ADDRESS', status: 400 },
   INSUFFICIENT_BALANCE: { code: 'INSUFFICIENT_BALANCE', message: 'Saldo XLM tidak cukup', status: 400 },
   TX_FAILED: { code: 'TX_FAILED', message: 'Transaksi gagal di Stellar', status: 400 },
+  TX_BAD_SEQ: { code: 'TX_BAD_SEQ', message: 'Transaksi menggunakan sequence number lama. Silakan refresh halaman dan coba lagi.', status: 400 },
+  TX_INSUFFICIENT_FEE: { code: 'TX_INSUFFICIENT_FEE', message: 'Biaya transaksi terlalu rendah. Silakan coba lagi.', status: 400 },
+  TX_UNDERFUNDED: { code: 'TX_UNDERFUNDED', message: 'Saldo XLM tidak mencukupi untuk pembayaran ini', status: 400 },
+  TX_TOO_LATE: { code: 'TX_TOO_LATE', message: 'Waktu transaksi telah habis (expired). Silakan refresh halaman dan coba lagi.', status: 400 },
   TX_TIMEOUT: { code: 'TX_TIMEOUT', message: 'Transaksi expired, silakan coba lagi', status: 400 },
   USER_NOT_AUTHENTICATED: { code: 'USER_NOT_AUTHENTICATED', message: 'Silakan login terlebih dahulu', status: 401 },
 } as const;
@@ -131,8 +135,26 @@ export async function confirmPayment(
   let result;
   try {
     result = await getServer().submitTransaction(transaction);
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Payment] Submit error:', error);
+
+    // Parse Stellar error response for specific failure reasons
+    const stellarError = error?.response?.data?.extras?.result_codes;
+    if (stellarError) {
+      const txCode = stellarError.transaction;
+      const opCodes = stellarError.operations;
+      console.error('[Payment] Stellar result codes:', { transaction: txCode, operations: opCodes });
+
+      // Map known Stellar error codes
+      if (txCode === 'tx_bad_seq') throw new PaymentError('TX_BAD_SEQ');
+      if (txCode === 'tx_insufficient_fee') throw new PaymentError('TX_INSUFFICIENT_FEE');
+      if (txCode === 'tx_too_late') throw new PaymentError('TX_TOO_LATE');
+      if (txCode === 'tx_failed' && opCodes?.includes('op_underfunded')) {
+        throw new PaymentError('TX_UNDERFUNDED');
+      }
+    }
+
+    // Generic error as fallback
     throw new PaymentError('TX_FAILED');
   }
 
