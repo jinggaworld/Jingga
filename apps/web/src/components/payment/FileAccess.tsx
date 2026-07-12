@@ -7,7 +7,7 @@ interface FileAccessProps {
   karyaId: string;
 }
 
-interface FileAccessData {
+interface AccessData {
   purchased: boolean;
   transaction: {
     txHash: string;
@@ -15,27 +15,61 @@ interface FileAccessData {
   } | null;
 }
 
+interface AccessUrlData {
+  accessUrl: string;
+  expiresAt: string;
+  judul: string;
+}
+
 export function FileAccess({ karyaId }: FileAccessProps) {
-  const [access, setAccess] = useState<FileAccessData | null>(null);
+  const [access, setAccess] = useState<AccessData | null>(null);
+  const [accessUrlData, setAccessUrlData] = useState<AccessUrlData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingUrl, setLoadingUrl] = useState(false);
   const [error, setError] = useState('');
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const getToken = () => localStorage.getItem('jingga_auth_token');
 
   useEffect(() => {
-    const checkAccess = async () => {
+    const fetchAccess = async () => {
+      const token = getToken();
+
       try {
-        const token = localStorage.getItem('jingga_auth_token');
-        const res = await fetch(`${API_BASE}/api/v1/payments/check/${karyaId}`, {
+        // Check purchase status
+        const checkRes = await fetch(`${API_BASE}/api/v1/payments/check/${karyaId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
 
-        if (!res.ok) {
+        if (!checkRes.ok) {
           throw new Error('Failed to check access');
         }
 
-        const data = await res.json();
-        setAccess(data);
+        const checkData = await checkRes.json();
+        setAccess(checkData);
+
+        // If purchased, fetch access URL
+        if (checkData.purchased) {
+          setLoadingUrl(true);
+          try {
+            const urlRes = await fetch(`${API_BASE}/api/v1/reader/access/${karyaId}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+            });
+
+            if (urlRes.ok) {
+              const urlData = await urlRes.json();
+              setAccessUrlData(urlData);
+            }
+          } catch {
+            // Access URL fetch is non-critical
+          } finally {
+            setLoadingUrl(false);
+          }
+        }
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -43,7 +77,7 @@ export function FileAccess({ karyaId }: FileAccessProps) {
       }
     };
 
-    checkAccess();
+    fetchAccess();
   }, [karyaId]);
 
   if (loading) {
@@ -59,7 +93,17 @@ export function FileAccess({ karyaId }: FileAccessProps) {
 
   if (error || !access?.purchased) {
     return null; // Don't show if not purchased
-  }    return (
+  }
+
+  const purchasedAt = access.transaction?.purchasedAt
+    ? new Date(access.transaction.purchasedAt).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : null;
+
+  return (
     <div className="bg-canvas border border-primary p-xl">
       <div className="flex items-center gap-md mb-lg">
         <div className="w-10 h-10 bg-semantic-success/10 flex items-center justify-center">
@@ -69,36 +113,63 @@ export function FileAccess({ karyaId }: FileAccessProps) {
         </div>
         <div>
           <h3 className="text-card-title text-ink">File Tersedia!</h3>
-          <p className="text-body-sm text-ink-muted">Akses file telah dibuka untuk Anda</p>
+          <p className="text-body-sm text-ink-muted">
+            {accessUrlData ? `Akses ke "${accessUrlData.judul}"` : 'Akses file telah dibuka untuk Anda'}
+          </p>
         </div>
       </div>
 
-      <div className="bg-surface-1 p-md mb-lg">
-        <div className="flex items-center justify-between text-body-sm">
-          <span className="text-ink-muted">Purchased on</span>
-          <span className="text-ink">
-            {new Date(access.transaction?.purchasedAt || '').toLocaleDateString('id-ID', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            })}
-          </span>
+      {purchasedAt && (
+        <div className="bg-surface-1 p-md mb-lg">
+          <div className="flex items-center justify-between text-body-sm">
+            <span className="text-ink-muted">Purchased on</span>
+            <span className="text-ink">{purchasedAt}</span>
+          </div>
+          {access.transaction?.txHash && (
+            <div className="flex items-center justify-between text-body-sm mt-xs">
+              <span className="text-ink-muted">Transaction</span>
+              <a
+                href={`https://stellar.expert/testnet/tx/${access.transaction.txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-mono text-xs"
+              >
+                {access.transaction.txHash.slice(0, 12)}...
+              </a>
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       <div className="flex gap-md">
-        <a
-          href={`/api/v1/karya/${karyaId}/download`}
-          className="flex-1 px-lg py-md bg-primary text-on-primary text-body text-center hover:bg-primary-hover transition-colors"
-        >
-          Download File
-        </a>
-        <a
-          href={`/karya/${karyaId}/read`}
-          className="px-lg py-md border border-hairline text-ink text-body hover:bg-surface-1 transition-colors"
-        >
-          Read Online
-        </a>
+        {loadingUrl ? (
+          <div className="flex-1 px-lg py-md bg-surface-2 text-ink-muted text-body text-center">
+            Generating download link...
+          </div>
+        ) : accessUrlData ? (
+          <a
+            href={accessUrlData.accessUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 px-lg py-md bg-primary text-on-primary text-body text-center font-medium hover:bg-primary-hover transition-colors"
+          >
+            Download File
+          </a>
+        ) : (
+          <div className="flex-1 px-lg py-md bg-surface-2 text-ink-muted text-body text-center">
+            File unavailable
+          </div>
+        )}
+        {accessUrlData && (
+          <a
+            href={accessUrlData.accessUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-lg py-md border border-hairline text-ink text-body hover:bg-surface-1 transition-colors"
+          >
+            Read Online
+          </a>
+        )}
       </div>
     </div>
   );
