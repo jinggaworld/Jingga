@@ -9,7 +9,9 @@ export const PAYMENT_ERRORS = {
   ALREADY_PURCHASED: { code: 'ALREADY_PURCHASED', message: 'Sudah membeli karya ini', status: 400 },
   ACCOUNT_NOT_FOUND: { code: 'ACCOUNT_NOT_FOUND', message: 'Wallet belum teraktivasi di Stellar network. Fund dulu via Dashboard > Fund Wallet atau https://friendbot.stellar.org?addr=WALLET_ADDRESS', status: 400 },
   INSUFFICIENT_BALANCE: { code: 'INSUFFICIENT_BALANCE', message: 'Saldo XLM tidak cukup', status: 400 },
+  DESTINATION_NOT_FOUND: { code: 'DESTINATION_NOT_FOUND', message: 'Wallet penulis (penerima) belum teraktivasi di Stellar network. Penulis perlu fund walletnya dulu.', status: 400 },
   TX_FAILED: { code: 'TX_FAILED', message: 'Transaksi gagal di Stellar', status: 400 },
+  TX_BAD_AUTH: { code: 'TX_BAD_AUTH', message: 'Gagal verifikasi tanda tangan. Pastikan Anda menandatangani dengan wallet yang benar (testnet vs mainnet).', status: 400 },
   TX_BAD_SEQ: { code: 'TX_BAD_SEQ', message: 'Transaksi menggunakan sequence number lama. Silakan refresh halaman dan coba lagi.', status: 400 },
   TX_INSUFFICIENT_FEE: { code: 'TX_INSUFFICIENT_FEE', message: 'Biaya transaksi terlalu rendah. Silakan coba lagi.', status: 400 },
   TX_UNDERFUNDED: { code: 'TX_UNDERFUNDED', message: 'Saldo XLM tidak mencukupi untuk pembayaran ini', status: 400 },
@@ -80,14 +82,20 @@ export async function initiatePayment(
   try {
     buyerAccount = await getServer().loadAccount(buyerWallet);
   } catch (error: any) {
-    // Wallet not activated on Stellar testnet
     if (error.name === 'NotFoundError' || error.constructor?.name === 'NotFoundError' || error.response?.status === 404) {
       throw new PaymentError('ACCOUNT_NOT_FOUND');
     }
     throw new PaymentError('TX_FAILED');
   }
 
-  // 4. Build payment transaction
+  // 4. Verify destination (author's wallet) exists on Stellar
+  try {
+    await getServer().loadAccount(karya.issuer_wallet);
+  } catch {
+    throw new PaymentError('DESTINATION_NOT_FOUND');
+  }
+
+  // 5. Build payment transaction
   const amount = karya.harga.toString();
   const memo = `JINGGA:BUY:${karyaId.slice(0, 8)}`;
 
@@ -129,6 +137,8 @@ export async function confirmPayment(
       getNetworkPassphrase()
     );
   } catch (error) {
+    console.error('[Payment] fromXDR deserialization error:', error);
+    console.error('[Payment] Network passphrase used:', getNetworkPassphrase());
     throw new PaymentError('TX_FAILED');
   }
 
@@ -138,23 +148,53 @@ export async function confirmPayment(
   } catch (error: any) {
     console.error('[Payment] Submit error:', error);
 
-    // Parse Stellar error response for specific failure reasons
-    const stellarError = error?.response?.data?.extras?.result_codes;
-    if (stellarError) {
-      const txCode = stellarError.transaction;
-      const opCodes = stellarError.operations;
-      console.error('[Payment] Stellar result codes:', { transaction: txCode, operations: opCodes });
+    // Try to extract Stellar result codes
+    const respData = error?.response?.data;
+    const resultCodes = respData?.extras?.result_codes;
 
-      // Map known Stellar error codes
+    if (resultCodes) {
+      const txCode = resultCodes.transaction;
+      const opCodes: string[] = resultCodes.operations || [];
+      const opCode = opCodes[0] || '';
+
+      console.error('[Payment] Stellar result codes:', {
+        transaction: txCode,
+        operations: opCodes,
+      });
+
+      // Map to user-friendly errors
       if (txCode === 'tx_bad_seq') throw new PaymentError('TX_BAD_SEQ');
+      if (txCode === 'tx_bad_auth' || txCode === 'tx_too_many_sponsoring') {
+        throw new PaymentError('TX_BAD_AUTH');
+      }
       if (txCode === 'tx_insufficient_fee') throw new PaymentError('TX_INSUFFICIENT_FEE');
       if (txCode === 'tx_too_late') throw new PaymentError('TX_TOO_LATE');
-      if (txCode === 'tx_failed' && opCodes?.includes('op_underfunded')) {
+      if (opCode === 'op_underfunded' || opCode === 'op_low_reserve') {
         throw new PaymentError('TX_UNDERFUNDED');
       }
+      if (opCode === 'op_no_destination') throw new PaymentError('DESTINATION_NOT_FOUND');
+
+      // Unmapped code — include raw code in message
+      const rawMsg = `Stellar error: ${txCode}${opCode ? ' / ' + opCode : ''}`;
+      console.error('[Payment] Unmapped Stellar code:', rawMsg);
+      throw new PaymentError('TX_FAILED');
     }
 
-    // Generic error as fallback
+    // Check for non-transaction errors (network, not found, etc)
+    if (error?.name === 'NotFoundError' || error?.response?.status === 404) {
+      throw new PaymentError('ACCOUNT_NOT_FOUND');
+    }
+
+    // Log full error for debugging (serialize safely)
+    let errorSummary = '';
+    try { errorSummary = JSON.stringify({
+      name: error?.name,
+      message: error?.message?.slice(0, 200),
+      status: error?.response?.status,
+      statusText: error?.response?.statusText,
+    }); } catch { errorSummary = String(error); }
+    console.error('[Payment] Unmapped error:', errorSummary);
+
     throw new PaymentError('TX_FAILED');
   }
 
