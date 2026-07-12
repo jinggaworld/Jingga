@@ -414,6 +414,20 @@ export async function submitSorobanTransaction(
       return { success: true, txHash };
     }
 
+    // Final check setelah polling timeout
+    if (status === 'pending' || status === 'not_found') {
+      await new Promise((r) => setTimeout(r, 5000));
+      try {
+        const finalResult = await rpcServer.getTransaction(txHash);
+        if (finalResult.status === 'success') {
+          return { success: true, txHash };
+        }
+        status = finalResult.status;
+      } catch {
+        // Final check gagal — return error dengan txHash agar user bisa cek explorer
+      }
+    }
+
     return { success: false, error: `Transaction failed with status: ${status}`, txHash };
   } catch (error: any) {
     console.error(`[Soroban] Submit error (${method}):`, error);
@@ -764,7 +778,23 @@ export async function submitSignedSorobanTx(
       return { success: true, txHash };
     }
 
-    // Return txHash even on failure so user can check on Stellar Expert
+    // Final check: polling timeout, tapi tx mungkin masih pending.
+    // Tunggu 5 detik dan cek sekali lagi — testnet kadang lambat update status.
+    if (status === 'pending' || status === 'not_found') {
+      await new Promise((r) => setTimeout(r, 5000));
+      try {
+        const finalResult = await rpcServer.getTransaction(txHash);
+        if (finalResult.status === 'success') {
+          console.log(`[Soroban] Transaction confirmed after final check: ${txHash}`);
+          return { success: true, txHash };
+        }
+        status = finalResult.status;
+      } catch {
+        // Final check juga gagal — lanjut ke return error
+      }
+    }
+
+    // Return txHash even on failure so route handler can still save it
     console.warn(`[Soroban] Transaction ${txHash} final status: ${status}`);
     return {
       success: false,
