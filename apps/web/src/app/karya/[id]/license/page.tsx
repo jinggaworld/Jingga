@@ -1164,10 +1164,17 @@ function OnChainSignButton({
         throw new Error(err.error || 'Failed to fetch signing XDR');
       }
 
-      const { xdr } = await xdrRes.json();
+      const xdrData = await xdrRes.json();
+      if (!xdrData.success) {
+        throw new Error(xdrData.error || 'Failed to prepare transaction — contract error');
+      }
+      if (!xdrData.xdr) {
+        throw new Error('No XDR received from server');
+      }
 
       // Step 2: Sign with Freighter
       setSignState('signing');
+      const xdr = xdrData.xdr;
       const signedXdr = await freighterSign(xdr, networkPassphrase);
 
       // Step 3: Submit signed XDR

@@ -197,11 +197,17 @@ export async function buildSorobanTransaction(
     // Step 2: Simulate via Soroban RPC untuk mendapatkan footprint + resource requirements
     const simulation = await rpcServer.simulateTransaction(tx);
 
-    // Cek error simulasi
+    // Cek error simulasi — contract call itself failed
     if (simulation?.error) {
+      const diagnosticEvents = (simulation as any)?.events || [];
       console.error(`[Soroban] Simulate error (${method}):`, simulation.error);
-      // Fallback: return unprepared XDR agar user bisa lihat error di Freighter
-      return { success: true, xdr: tx.toXDR() };
+      if (diagnosticEvents.length > 0) {
+        console.error(`[Soroban] ${diagnosticEvents.length} diagnostic event(s) emitted during simulation`);
+      }
+      return {
+        success: false,
+        error: `Contract call failed: ${simulation.error}`,
+      };
     }
 
     // Step 3: Prepare transaction — set SorobanTransactionData (footprint, resource fee, etc.)
