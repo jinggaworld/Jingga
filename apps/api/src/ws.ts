@@ -6,7 +6,7 @@
 
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
-import { setupWSConnection } from 'y-websocket/bin/utils';
+import { setupWSConnection } from '@y/websocket-server';
 
 let wss: WebSocketServer | null = null;
 
