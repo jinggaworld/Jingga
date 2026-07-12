@@ -33,11 +33,24 @@ export default function EditorPage() {
   });
   const searchParams = useSearchParams();
 
-  // Collaboration room: use ?room= query param or generate a unique session ID
+  // Collaboration room: use ?room= query param, localStorage cache, or generate unique session ID
   const roomId = React.useMemo(() => {
     const fromUrl = searchParams.get('room');
     if (fromUrl) return fromUrl;
-    // Generate a unique session ID (persists for this browser tab)
+
+    // Check localStorage for a saved room
+    try {
+      const cached = localStorage.getItem('jingga_last_room');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        // Only reuse rooms from the last 24 hours
+        if (parsed && parsed.id && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
+          return parsed.id;
+        }
+      }
+    } catch {}
+
+    // Generate a unique session ID
     return 'session-' + (crypto.randomUUID?.() || Math.random().toString(36).slice(2, 10));
   }, [searchParams]);
 
@@ -45,6 +58,21 @@ export default function EditorPage() {
   const ydocRef = useRef<Y.Doc | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
   const [collabStatus, setCollabStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
+
+  // Save current room to localStorage for persistence
+  useEffect(() => {
+    if (roomId) {
+      try {
+        localStorage.setItem('jingga_last_room', JSON.stringify({ id: roomId, timestamp: Date.now() }));
+        // Also add to recent rooms list
+        const raw = localStorage.getItem('jingga_recent_rooms');
+        const rooms = raw ? JSON.parse(raw) : [];
+        const filtered = rooms.filter((r: any) => r.id !== roomId);
+        filtered.unshift({ id: roomId, name: roomId.length > 20 ? roomId.slice(0, 20) + '...' : roomId, lastAccessed: Date.now() });
+        localStorage.setItem('jingga_recent_rooms', JSON.stringify(filtered.slice(0, 10)));
+      } catch {}
+    }
+  }, [roomId]);
 
   // Initialize Y.Doc + WebSocket provider once
   useEffect(() => {
@@ -266,7 +294,7 @@ export default function EditorPage() {
                 )}
               </p>
               {/* Room ID — click to copy shareable link */}
-              <p className="text-body-sm text-ink-subtle mt-xs flex items-center gap-xs">
+              <p className="text-body-sm text-ink-subtle mt-xs flex items-center gap-xs flex-wrap">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                 </svg>
@@ -282,6 +310,12 @@ export default function EditorPage() {
                 >
                   Copy link
                 </button>
+                <a href="/join" className="text-ink-subtle hover:text-primary transition-colors ml-xs" title="Join another room">
+                  <svg className="w-3.5 h-3.5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Join
+                </a>
               </p>
             </div>
             {/* Collaboration indicator */}

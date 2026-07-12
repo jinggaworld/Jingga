@@ -16,3 +16,200 @@
     letter-spacing: 0.16px;
   }
 }
+
+/* ============================================================
+   Paper-like A4 Editor Styling
+   ============================================================ */
+
+.paper-editor-wrapper {
+  padding: 0;
+  background: transparent;
+}
+
+.paper-editor .ProseMirror {
+  /* A4-like paper sheet */
+  max-width: 210mm;  /* A4 width */
+  min-height: 297mm; /* A4 height */
+  margin: 24px auto;
+  padding: 60px 72px;
+  background: #ffffff;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.04);
+  outline: none;
+  position: relative;
+  /* Typography */
+  font-size: 12pt;
+  line-height: 1.8;
+  color: #161616;
+  caret-color: #0f62fe;
+}
+
+/* Page separators between pages (for multi-page content) */
+.paper-editor .ProseMirror > * + * {
+  margin-top: 0.5em;
+}
+
+.paper-editor .ProseMirror h1 {
+  font-size: 24pt;
+  font-weight: 500;
+  line-height: 1.3;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  page-break-before: auto;
+  page-break-after: avoid;
+}
+
+.paper-editor .ProseMirror h2 {
+  font-size: 18pt;
+  font-weight: 500;
+  line-height: 1.4;
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+  page-break-after: avoid;
+}
+
+.paper-editor .ProseMirror h3 {
+  font-size: 14pt;
+  font-weight: 500;
+  line-height: 1.5;
+  margin-top: 1em;
+  margin-bottom: 0.3em;
+  page-break-after: avoid;
+}
+
+.paper-editor .ProseMirror p {
+  margin-bottom: 0.7em;
+}
+
+/* Don't indent certain elements */
+.paper-editor .ProseMirror h1,
+.paper-editor .ProseMirror h2,
+.paper-editor .ProseMirror h3,
+.paper-editor .ProseMirror blockquote,
+.paper-editor .ProseMirror pre,
+.paper-editor .ProseMirror ul,
+.paper-editor .ProseMirror ol,
+.paper-editor .ProseMirror hr,
+.paper-editor .ProseMirror table {
+  text-indent: 0;
+}
+
+.paper-editor .ProseMirror blockquote {
+  border-left: 3px solid #0f62fe;
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  color: #525252;
+  font-style: italic;
+  background: #f4f4f4;
+}
+
+.paper-editor .ProseMirror pre {
+  background: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  border-radius: 0;
+  padding: 1em;
+  font-size: 10pt;
+  line-height: 1.5;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.paper-editor .ProseMirror pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+.paper-editor .ProseMirror ul,
+.paper-editor .ProseMirror ol {
+  padding-left: 2em;
+  margin: 0.5em 0;
+}
+
+.paper-editor .ProseMirror li {
+  margin-bottom: 0.3em;
+}
+
+.paper-editor .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1em auto;
+  border: 1px solid #e0e0e0;
+}
+
+.paper-editor .ProseMirror hr {
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  margin: 2em 0;
+}
+
+.paper-editor .ProseMirror table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 10pt;
+}
+
+.paper-editor .ProseMirror th,
+.paper-editor .ProseMirror td {
+  border: 1px solid #e0e0e0;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.paper-editor .ProseMirror th {
+  background: #f4f4f4;
+  font-weight: 500;
+}
+
+/* Placeholder styling */
+.paper-editor .ProseMirror p.is-editor-empty:first-child::before {
+  color: #8c8c8c;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Selection styling */
+.paper-editor .ProseMirror ::selection {
+  background: #0f62fe20;
+}
+
+.paper-editor .ProseMirror::-webkit-scrollbar {
+  width: 6px;
+}
+
+.paper-editor .ProseMirror::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.paper-editor .ProseMirror::-webkit-scrollbar-thumb {
+  background: #e0e0e0;
+  border-radius: 0;
+}
+
+.paper-editor .ProseMirror::-webkit-scrollbar-thumb:hover {
+  background: #c6c6c6;
+}
+
+/* Link styling */
+.paper-editor .ProseMirror a {
+  color: #0f62fe;
+  text-decoration: underline;
+}
+
+.paper-editor .ProseMirror a:hover {
+  color: #0043ce;
+}
+
+/* Code styling */
+.paper-editor .ProseMirror code {
+  background: #f4f4f4;
+  padding: 2px 4px;
+  font-size: 0.9em;
+  border: 1px solid #e0e0e0;
+}
+

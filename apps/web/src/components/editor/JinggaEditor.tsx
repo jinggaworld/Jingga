@@ -572,13 +572,15 @@ export default function JinggaEditor({
       />
 
       {/* ------------------------------------------------------- */}
-      {/* Editor Content */}
+      {/* Editor Content — Paper-like A4 pages */}
       {/* ------------------------------------------------------- */}
-      <EditorContent
-        editor={editor}
-        style={{ minHeight: `${minHeight}px` }}
-      className={`prose prose-lg max-w-none px-lg py-lg focus:outline-none [&_.ProseMirror]:outline-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:text-ink-subtle [&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none [&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.ProseMirror]:caret-ink`}
-      />
+      <div className="paper-editor-wrapper">
+        <EditorContent
+          editor={editor}
+          style={{ minHeight: `${minHeight}px` }}
+          className="prose prose-lg max-w-none px-lg py-xl focus:outline-none paper-editor"
+        />
+      </div>
 
       {/* ------------------------------------------------------- */}
       {/* Footer Stats */}
