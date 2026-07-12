@@ -6,45 +6,47 @@ const config: Config = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       // ============================================================
-      // IBM Carbon Design System Colors
+      // CSS Variable-based Theme Colors
+      // Light mode (:root) ↔ Dark mode (.dark)
       // ============================================================
       colors: {
         // Brand & Accent
-        primary: '#0f62fe',
-        'primary-hover': '#0050e6',
-        'primary-pressed': '#002d9c',
-        'blue-60': '#0043ce',
-        'blue-80': '#002d9c',
+        primary: 'var(--color-primary)',
+        'primary-hover': 'var(--color-primary-hover)',
+        'primary-pressed': 'var(--color-primary-pressed)',
+        'blue-60': 'var(--color-blue-60)',
+        'blue-80': 'var(--color-blue-80)',
 
         // Surfaces
-        canvas: '#ffffff',
-        'surface-1': '#f4f4f4',
-        'surface-2': '#e0e0e0',
-        hairline: '#e0e0e0',
-        'hairline-strong': '#161616',
+        canvas: 'var(--color-canvas)',
+        'surface-1': 'var(--color-surface-1)',
+        'surface-2': 'var(--color-surface-2)',
+        hairline: 'var(--color-hairline)',
+        'hairline-strong': 'var(--color-hairline-strong)',
 
         // Text (Ink)
-        ink: '#161616',
-        'ink-muted': '#525252',
-        'ink-subtle': '#8c8c8c',
+        ink: 'var(--color-ink)',
+        'ink-muted': 'var(--color-ink-muted)',
+        'ink-subtle': 'var(--color-ink-subtle)',
 
         // Inverse (Dark backgrounds)
-        'inverse-canvas': '#161616',
-        'inverse-surface-1': '#262626',
-        'inverse-ink': '#ffffff',
-        'inverse-ink-muted': '#c6c6c6',
+        'inverse-canvas': 'var(--color-inverse-canvas)',
+        'inverse-surface-1': 'var(--color-inverse-surface-1)',
+        'inverse-ink': 'var(--color-inverse-ink)',
+        'inverse-ink-muted': 'var(--color-inverse-ink-muted)',
 
         // Semantic
-        'semantic-success': '#24a148',
-        'semantic-warning': '#f1c21b',
-        'semantic-error': '#da1e28',
-        'semantic-info': '#0f62fe',
+        'semantic-success': 'var(--color-semantic-success)',
+        'semantic-warning': 'var(--color-semantic-warning)',
+        'semantic-error': 'var(--color-semantic-error)',
+        'semantic-info': 'var(--color-semantic-info)',
 
         // On-primary text
-        'on-primary': '#ffffff',
+        'on-primary': 'var(--color-on-primary)',
       },
 
       // ============================================================

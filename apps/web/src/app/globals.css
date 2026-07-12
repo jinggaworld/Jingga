@@ -5,6 +5,72 @@
 @tailwind utilities;
 
 @layer base {
+  /* ============================================================
+     Light Theme (default)
+     ============================================================ */
+  :root {
+    --color-primary: #0f62fe;
+    --color-primary-hover: #0050e6;
+    --color-primary-pressed: #002d9c;
+    --color-blue-60: #0043ce;
+    --color-blue-80: #002d9c;
+
+    --color-canvas: #ffffff;
+    --color-surface-1: #f4f4f4;
+    --color-surface-2: #e0e0e0;
+    --color-hairline: #e0e0e0;
+    --color-hairline-strong: #161616;
+
+    --color-ink: #161616;
+    --color-ink-muted: #525252;
+    --color-ink-subtle: #8c8c8c;
+
+    --color-inverse-canvas: #161616;
+    --color-inverse-surface-1: #262626;
+    --color-inverse-ink: #ffffff;
+    --color-inverse-ink-muted: #c6c6c6;
+
+    --color-semantic-success: #24a148;
+    --color-semantic-warning: #f1c21b;
+    --color-semantic-error: #da1e28;
+    --color-semantic-info: #0f62fe;
+
+    --color-on-primary: #ffffff;
+  }
+
+  /* ============================================================
+     Dark Theme
+     ============================================================ */
+  .dark {
+    --color-primary: #78a9ff;
+    --color-primary-hover: #4589ff;
+    --color-primary-pressed: #0043ce;
+    --color-blue-60: #4589ff;
+    --color-blue-80: #002d9c;
+
+    --color-canvas: #161616;
+    --color-surface-1: #262626;
+    --color-surface-2: #393939;
+    --color-hairline: #393939;
+    --color-hairline-strong: #c6c6c6;
+
+    --color-ink: #ffffff;
+    --color-ink-muted: #c6c6c6;
+    --color-ink-subtle: #8d8d8d;
+
+    --color-inverse-canvas: #ffffff;
+    --color-inverse-surface-1: #f4f4f4;
+    --color-inverse-ink: #161616;
+    --color-inverse-ink-muted: #525252;
+
+    --color-semantic-success: #42be65;
+    --color-semantic-warning: #f1c21b;
+    --color-semantic-error: #fa4d56;
+    --color-semantic-info: #78a9ff;
+
+    --color-on-primary: #161616;
+  }
+
   html {
     font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -19,9 +85,6 @@
 
 /* ============================================================
    Paper-like A4 Editor with Repeating Page Separators
-   ============================================================
-   Each "page" cycle = 60px top padding + 297mm content + 60px bottom padding + 32px separator gap
-   Total cycle height: calc(297mm + 152px)
    ============================================================ */
 
 .paper-editor-wrapper {
@@ -30,94 +93,66 @@
 }
 
 .paper-editor .ProseMirror {
-  /* A4 width */
   max-width: 210mm;
-  /* Let content grow beyond one page — gradient creates visual pages */
   min-height: 297mm;
   margin: 24px auto;
   padding: 60px 72px;
   outline: none;
   position: relative;
-
-  /* Typography */
   font-size: 12pt;
   line-height: 1.8;
   color: #161616;
   caret-color: #0f62fe;
-
-  /* Repeating gradient creates stacked A4 pages with visual separators */
   background:
-    /* Page shadow at each separator (simulates paper stack edge) */
     repeating-linear-gradient(
       to bottom,
       transparent 0,
-      transparent calc(60px + 297mm + 54px),        /* just before separator gap */
+      transparent calc(60px + 297mm + 54px),
       rgba(0, 0, 0, 0.04) calc(60px + 297mm + 54px),
       rgba(0, 0, 0, 0.04) calc(60px + 297mm + 56px),
       rgba(0, 0, 0, 0.02) calc(60px + 297mm + 56px),
       rgba(0, 0, 0, 0.02) calc(60px + 297mm + 60px),
       transparent calc(60px + 297mm + 60px)
     ),
-    /* White page background + separator line + gap */
     repeating-linear-gradient(
       to bottom,
-      #ffffff 0,                                           /* top padding area */
-      #ffffff 60px,                                        /* end of top padding */
-      #ffffff 60px,                                        /* start of content */
-      #ffffff calc(60px + 297mm),                          /* end of content */
-      #ffffff calc(60px + 297mm),                          /* bottom padding */
-      #ffffff calc(60px + 297mm + 60px),                   /* end of bottom padding */
-      #e0e0e0 calc(60px + 297mm + 60px),                   /* separator hairline start */
-      #e0e0e0 calc(60px + 297mm + 60px + 1px),             /* separator hairline end */
-      #f4f4f4 calc(60px + 297mm + 60px + 1px),             /* gap start */
-      #f4f4f4 calc(60px + 297mm + 60px + 32px)             /* gap end */
+      #ffffff 0,
+      #ffffff 60px,
+      #ffffff 60px,
+      #ffffff calc(60px + 297mm),
+      #ffffff calc(60px + 297mm),
+      #ffffff calc(60px + 297mm + 60px),
+      #e0e0e0 calc(60px + 297mm + 60px),
+      #e0e0e0 calc(60px + 297mm + 60px + 1px),
+      #f4f4f4 calc(60px + 297mm + 60px + 1px),
+      #f4f4f4 calc(60px + 297mm + 60px + 32px)
     ),
-    /* Solid white fallback for first page */
     #ffffff;
-
   background-size:
-    100% calc(60px + 297mm + 60px + 32px),   /* shadow layer */
-    100% calc(60px + 297mm + 60px + 32px);   /* main layer */
+    100% calc(60px + 297mm + 60px + 32px),
+    100% calc(60px + 297mm + 60px + 32px);
   background-repeat: repeat;
-
-  /* Outer page shadow for the first/lone page */
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-.paper-editor .ProseMirror p {
-  margin-bottom: 0.7em;
-}
+.paper-editor .ProseMirror p { margin-bottom: 0.7em; }
 
 .paper-editor .ProseMirror h1 {
-  font-size: 24pt;
-  font-weight: 500;
-  line-height: 1.3;
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-  page-break-before: auto;
-  page-break-after: avoid;
+  font-size: 24pt; font-weight: 500; line-height: 1.3;
+  margin-top: 1.5em; margin-bottom: 0.5em;
+  page-break-before: auto; page-break-after: avoid;
 }
 
 .paper-editor .ProseMirror h2 {
-  font-size: 18pt;
-  font-weight: 500;
-  line-height: 1.4;
-  margin-top: 1.2em;
-  margin-bottom: 0.4em;
-  page-break-after: avoid;
+  font-size: 18pt; font-weight: 500; line-height: 1.4;
+  margin-top: 1.2em; margin-bottom: 0.4em; page-break-after: avoid;
 }
 
 .paper-editor .ProseMirror h3 {
-  font-size: 14pt;
-  font-weight: 500;
-  line-height: 1.5;
-  margin-top: 1em;
-  margin-bottom: 0.3em;
-  page-break-after: avoid;
+  font-size: 14pt; font-weight: 500; line-height: 1.5;
+  margin-top: 1em; margin-bottom: 0.3em; page-break-after: avoid;
 }
 
-/* No text-indent on any elements */
 .paper-editor .ProseMirror h1,
 .paper-editor .ProseMirror h2,
 .paper-editor .ProseMirror h3,
@@ -132,121 +167,48 @@
 }
 
 .paper-editor .ProseMirror blockquote {
-  border-left: 3px solid #0f62fe;
-  margin: 1em 0;
-  padding: 0.5em 1em;
-  color: #525252;
-  font-style: italic;
-  background: #f4f4f4;
+  border-left: 3px solid #0f62fe; margin: 1em 0;
+  padding: 0.5em 1em; color: #525252;
+  font-style: italic; background: #f4f4f4;
 }
 
 .paper-editor .ProseMirror pre {
-  background: #f4f4f4;
-  border: 1px solid #e0e0e0;
-  border-radius: 0;
-  padding: 1em;
-  font-size: 10pt;
-  line-height: 1.5;
-  overflow-x: auto;
-  margin: 1em 0;
+  background: #f4f4f4; border: 1px solid #e0e0e0;
+  border-radius: 0; padding: 1em; font-size: 10pt;
+  line-height: 1.5; overflow-x: auto; margin: 1em 0;
 }
 
-.paper-editor .ProseMirror pre code {
-  background: none;
-  padding: 0;
-  font-size: inherit;
-}
-
-.paper-editor .ProseMirror ul,
-.paper-editor .ProseMirror ol {
-  padding-left: 2em;
-  margin: 0.5em 0;
-}
-
-.paper-editor .ProseMirror li {
-  margin-bottom: 0.3em;
-}
+.paper-editor .ProseMirror pre code { background: none; padding: 0; font-size: inherit; }
+.paper-editor .ProseMirror ul, .paper-editor .ProseMirror ol { padding-left: 2em; margin: 0.5em 0; }
+.paper-editor .ProseMirror li { margin-bottom: 0.3em; }
 
 .paper-editor .ProseMirror img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-  margin: 1em auto;
-  border: 1px solid #e0e0e0;
+  max-width: 100%; height: auto; display: block;
+  margin: 1em auto; border: 1px solid #e0e0e0;
 }
 
-.paper-editor .ProseMirror hr {
-  border: none;
-  border-top: 1px solid #e0e0e0;
-  margin: 2em 0;
-}
+.paper-editor .ProseMirror hr { border: none; border-top: 1px solid #e0e0e0; margin: 2em 0; }
 
-.paper-editor .ProseMirror table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1em 0;
-  font-size: 10pt;
-}
+.paper-editor .ProseMirror table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 10pt; }
+.paper-editor .ProseMirror th, .paper-editor .ProseMirror td { border: 1px solid #e0e0e0; padding: 8px 12px; text-align: left; }
+.paper-editor .ProseMirror th { background: #f4f4f4; font-weight: 500; }
 
-.paper-editor .ProseMirror th,
-.paper-editor .ProseMirror td {
-  border: 1px solid #e0e0e0;
-  padding: 8px 12px;
-  text-align: left;
-}
-
-.paper-editor .ProseMirror th {
-  background: #f4f4f4;
-  font-weight: 500;
-}
-
-/* Placeholder styling */
 .paper-editor .ProseMirror p.is-editor-empty:first-child::before {
-  color: #8c8c8c;
-  content: attr(data-placeholder);
-  float: left;
-  height: 0;
-  pointer-events: none;
+  color: #8c8c8c; content: attr(data-placeholder);
+  float: left; height: 0; pointer-events: none;
 }
 
-/* Selection styling */
-.paper-editor .ProseMirror ::selection {
-  background: #0f62fe20;
-}
+.paper-editor .ProseMirror ::selection { background: #0f62fe20; }
+.paper-editor .ProseMirror::-webkit-scrollbar { width: 6px; }
+.paper-editor .ProseMirror::-webkit-scrollbar-track { background: transparent; }
+.paper-editor .ProseMirror::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 0; }
+.paper-editor .ProseMirror::-webkit-scrollbar-thumb:hover { background: #c6c6c6; }
 
-.paper-editor .ProseMirror::-webkit-scrollbar {
-  width: 6px;
-}
-
-.paper-editor .ProseMirror::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.paper-editor .ProseMirror::-webkit-scrollbar-thumb {
-  background: #e0e0e0;
-  border-radius: 0;
-}
-
-.paper-editor .ProseMirror::-webkit-scrollbar-thumb:hover {
-  background: #c6c6c6;
-}
-
-/* Link styling */
-.paper-editor .ProseMirror a {
-  color: #0f62fe;
-  text-decoration: underline;
-}
-
-.paper-editor .ProseMirror a:hover {
-  color: #0043ce;
-}
-
-/* Code styling */
+.paper-editor .ProseMirror a { color: #0f62fe; text-decoration: underline; }
+.paper-editor .ProseMirror a:hover { color: #0043ce; }
 .paper-editor .ProseMirror code {
-  background: #f4f4f4;
-  padding: 2px 4px;
-  font-size: 0.9em;
-  border: 1px solid #e0e0e0;
+  background: #f4f4f4; padding: 2px 4px;
+  font-size: 0.9em; border: 1px solid #e0e0e0;
 }
 
 /* ============================================================
@@ -254,25 +216,13 @@
    ============================================================ */
 
 @keyframes twinkle {
-  0% {
-    opacity: 0.15;
-    transform: scale(0.8);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
+  0% { opacity: 0.15; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1.2); }
 }
 
 @keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {

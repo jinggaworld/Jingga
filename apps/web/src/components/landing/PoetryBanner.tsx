@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 
 // ============================================================
-// The Poem — minimal, clean, just the words
+// The Poem
 // ============================================================
 
 const POEM_LINES = [
@@ -28,7 +28,6 @@ const INITIAL_DELAY = 300;
 export function PoetryBanner() {
   const [visibleLines, setVisibleLines] = useState<number>(0);
 
-  // Stable black dots (memoized)
   const dots = useMemo(
     () =>
       Array.from({ length: 30 }, (_, i) => ({
@@ -42,43 +41,29 @@ export function PoetryBanner() {
     [],
   );
 
-  // Timer management
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  const scheduleLines = useRef((startDelay: number) => {
+  useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
     POEM_LINES.forEach((_, i) => {
       const t = setTimeout(() => {
         setVisibleLines((prev) => Math.max(prev, i + 1));
-      }, startDelay + i * LINE_INTERVAL);
+      }, INITIAL_DELAY + i * LINE_INTERVAL);
       timers.push(t);
     });
-    timersRef.current.push(...timers);
-  });
+    timersRef.current = timers;
 
-  useEffect(() => {
-    scheduleLines.current(INITIAL_DELAY);
     return () => {
-      timersRef.current.forEach(clearTimeout);
+      timers.forEach(clearTimeout);
       timersRef.current = [];
     };
   }, []);
 
   const isAllVisible = visibleLines >= POEM_LINES.length;
 
-  const handleReplay = () => {
-    timersRef.current.forEach(clearTimeout);
-    timersRef.current = [];
-    setVisibleLines(0);
-    const resetTimer = setTimeout(() => {
-      scheduleLines.current(INITIAL_DELAY);
-    }, 300);
-    timersRef.current.push(resetTimer);
-  };
-
   return (
-    <div className="relative bg-canvas border border-hairline p-xl lg:p-xxl min-h-[380px] overflow-hidden">
-      {/* Black dot field — like stars on a white sky */}
+    <div className="relative bg-canvas border border-hairline p-xl lg:p-xxl min-h-[380px] overflow-hidden group transition-all duration-300 hover:shadow-[0_0_24px_-4px_rgba(15,98,254,0.15)] hover:border-primary/30 hover:scale-[1.01]">
+      {/* Black dot field */}
       {dots.map((dot) => (
         <div
           key={dot.id}
@@ -93,13 +78,12 @@ export function PoetryBanner() {
         />
       ))}
 
-      {/* Subtle top & bottom hairlines */}
+      {/* Top & bottom hairlines */}
       <div className="absolute top-0 left-8 right-8 h-px bg-hairline" />
       <div className="absolute bottom-0 left-8 right-8 h-px bg-hairline" />
 
       {/* Content */}
       <div className="relative z-10">
-        {/* Poem lines */}
         <div className="space-y-1">
           {POEM_LINES.map((line, i) => {
             if (!line) {
@@ -137,23 +121,12 @@ export function PoetryBanner() {
           })}
         </div>
 
-        {/* Bottom ornament */}
         {isAllVisible && (
           <div className="mt-lg flex items-center gap-sm text-body-sm text-ink-subtle animate-fade-in">
             <span className="w-8 h-px bg-hairline-strong/30" />
             <span className="font-mono text-caption tracking-wider">&mdash; Jingga</span>
             <span className="w-8 h-px bg-hairline-strong/30" />
           </div>
-        )}
-
-        {/* Replay */}
-        {isAllVisible && (
-          <button
-            onClick={handleReplay}
-            className="mt-md text-caption text-ink-subtle hover:text-ink transition-colors"
-          >
-            &#x21bb; Replay
-          </button>
         )}
       </div>
     </div>
