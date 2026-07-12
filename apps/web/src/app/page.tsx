@@ -1,34 +1,45 @@
 'use client';
 
 import { Layout } from '@/components/layout/Layout';
+import { PoetryBanner } from '@/components/landing/PoetryBanner';
 
 export default function HomePage() {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="bg-canvas py-section px-lg">
+      <section className="bg-canvas py-section px-lg overflow-hidden">
         <div className="mx-auto max-w-[1584px]">
-          <h1 className="text-display-lg text-ink mb-lg max-w-4xl">
-            Publish your work. Get paid instantly.
-          </h1>
-          <p className="text-body-lg text-ink-muted mb-xl max-w-2xl">
-            A publication & royalty platform for independent writers, researchers, and creators
-            across Southeast Asia. Built on Stellar: instant payments, transparent royalties,
-            no middlemen.
-          </p>
-          <div className="flex gap-md">
-            <a
-              href="/upload"
-              className="bg-primary text-on-primary text-button py-sm px-lg rounded-none hover:bg-primary-hover transition-colors"
-            >
-              Start Publishing
-            </a>
-            <a
-              href="/marketplace"
-              className="border border-primary text-primary text-button py-sm px-lg rounded-none hover:bg-surface-1 transition-colors"
-            >
-              Explore Works
-            </a>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-xl items-start">
+            {/* Left: Headline */}
+            <div>
+              <h1 className="text-display-lg text-ink mb-lg max-w-2xl">
+                Publish your work. Get paid instantly.
+              </h1>
+              <p className="text-body-lg text-ink-muted mb-xl max-w-xl">
+                A publication & royalty platform for independent writers, researchers, and creators
+                across Southeast Asia. Built on Stellar: instant payments, transparent royalties,
+                no middlemen.
+              </p>
+              <div className="flex gap-md">
+                <a
+                  href="/upload"
+                  className="bg-primary text-on-primary text-button py-sm px-lg rounded-none hover:bg-primary-hover transition-colors"
+                >
+                  Start Publishing
+                </a>
+                <a
+                  href="/marketplace"
+                  className="border border-primary text-primary text-button py-sm px-lg rounded-none hover:bg-surface-1 transition-colors"
+                >
+                  Explore Works
+                </a>
+              </div>
+            </div>
+
+            {/* Right: Poetry */}
+            <div className="w-full">
+              <PoetryBanner />
+            </div>
           </div>
         </div>
       </section>
