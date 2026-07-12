@@ -19,16 +19,16 @@ let wss: WebSocketServer | null = null;
  */
 export function startCollabServer(
   server?: ReturnType<typeof createServer>,
-  path = '/collab',
 ): { wss: WebSocketServer; wsPath: string } {
   if (wss) {
     console.log('[Collab WS] Server already running');
-    return { wss, wsPath: path };
+    return { wss, wsPath: '/collab' };
   }
 
   wss = new WebSocketServer({
     server: server || undefined,
-    path,
+    // NO path filter — y-websocket client appends /{roomName} to the URL
+    // e.g. ws://localhost:3001/collab/my-room
   });
 
   wss.on('connection', (conn, req) => {
@@ -40,8 +40,8 @@ export function startCollabServer(
     console.error('[Collab WS] Error:', err);
   });
 
-  console.log(`[Collab WS] Ready on path: ${path}`);
-  return { wss, wsPath: path };
+  console.log(`[Collab WS] Ready at /collab/*`);
+  return { wss, wsPath: '/collab' };
 }
 
 /**
