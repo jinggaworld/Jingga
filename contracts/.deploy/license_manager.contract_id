@@ -1,15 +1,11 @@
 ℹ️  Uploading contract WASM…
-ℹ️  Simulating transaction…
-ℹ️  Signing transaction: ce768c56a5684c37081f466f2f06f1c24eede0503c38ffc084fcf92816b8e1e6
-🌎 Sending transaction…
-✅ Transaction submitted successfully!
-🔗 https://stellar.expert/explorer/testnet/tx/ce768c56a5684c37081f466f2f06f1c24eede0503c38ffc084fcf92816b8e1e6
+ℹ️  Skipping install because wasm already installed
 ℹ️  Deploying contract using wasm hash aa593e9cf09d58d1e7fff26d44709f7c5689219857746b6262ef84d520139521
 ℹ️  Simulating transaction…
-ℹ️  Signing transaction: 40ff56484f31a3120281d131802d66838feb08d724c21b2830ab80f8e6d94d67
+ℹ️  Signing transaction: 12a87f545a1a7dc73aa2401d114709d456176c6ed49ce54be737a431c9390c02
 🌎 Sending transaction…
 ✅ Transaction submitted successfully!
-🔗 https://stellar.expert/explorer/testnet/tx/40ff56484f31a3120281d131802d66838feb08d724c21b2830ab80f8e6d94d67
-🔗 https://lab.stellar.org/r/testnet/contract/CD3PN2HLF2ZL6AXLDD3RUE5WCLK3RZDV6LOVB6KREFO3YYLNZAHBKKMF
+🔗 https://stellar.expert/explorer/testnet/tx/12a87f545a1a7dc73aa2401d114709d456176c6ed49ce54be737a431c9390c02
+🔗 https://lab.stellar.org/r/testnet/contract/CBIHU3DRV6U3UBMHVIAQQWB2KRCSY6VM3DXNB76ZSHEOCQJR6DFPR7C7
 ✅ Deployed!
-CD3PN2HLF2ZL6AXLDD3RUE5WCLK3RZDV6LOVB6KREFO3YYLNZAHBKKMF
+CBIHU3DRV6U3UBMHVIAQQWB2KRCSY6VM3DXNB76ZSHEOCQJR6DFPR7C7

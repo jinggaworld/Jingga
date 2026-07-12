@@ -58,12 +58,12 @@ export function getStellarExpertAccountUrl(publicKey: string): string {
 
 /** Get the deployed RoyaltySplit contract ID */
 export function getRoyaltySplitContractId(): string {
-  return process.env.CONTRACT_ROYALTY_SPLIT || 'CDATTT53GBFZZZQOVMGVO63FIM6FGRXGEBIVC4I2OPOHWOTXHQOOSWGN';
+  return process.env.CONTRACT_ROYALTY_SPLIT || 'CARE27GIE5INY76J2RQOKCLBM7CFXBP4SIUDRCJDHE46MPI6XJP7CAR2';
 }
 
 /** Get the deployed LicenseManager contract ID */
 export function getLicenseManagerContractId(): string {
-  return process.env.CONTRACT_LICENSE_MANAGER || 'CD3PN2HLF2ZL6AXLDD3RUE5WCLK3RZDV6LOVB6KREFO3YYLNZAHBKKMF';
+  return process.env.CONTRACT_LICENSE_MANAGER || 'CBIHU3DRV6U3UBMHVIAQQWB2KRCSY6VM3DXNB76ZSHEOCQJR6DFPR7C7';
 }
 
 /** Get the deployer public key (admin of both contracts) */
