@@ -141,13 +141,18 @@ export async function signMessage(message: string): Promise<string | null> {
 
 /**
  * Sign a transaction XDR with Freighter wallet.
+ * 
+ * Freighter v6+ expects the second argument as an options object: { networkPassphrase }.
+ * Passing a plain string works with older versions but fails silently with v6.
  */
 export async function signTransaction(xdr: string, network?: string): Promise<string> {
   const api = await getFreighterApi();
   if (!api) throw new Error('Freighter is not installed');
 
   if (typeof api.signTransaction === 'function') {
-    return await api.signTransaction(xdr, network);
+    // Freighter v6+ uses options object format
+    const opts = network ? { networkPassphrase: network } : undefined;
+    return await api.signTransaction(xdr, opts);
   }
 
   throw new Error('Freighter signTransaction is not available');

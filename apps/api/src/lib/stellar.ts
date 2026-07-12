@@ -50,3 +50,35 @@ export function getStellarExpertAccountUrl(publicKey: string): string {
   const network = process.env.STELLAR_NETWORK || 'testnet';
   return `https://stellar.expert/${network}/account/${publicKey}`;
 }
+
+// ============================================================
+// Soroban Smart Contract Configuration
+// ============================================================
+
+/** Get the deployed RoyaltySplit contract ID */
+export function getRoyaltySplitContractId(): string {
+  return process.env.CONTRACT_ROYALTY_SPLIT || 'CDATTT53GBFZZZQOVMGVO63FIM6FGRXGEBIVC4I2OPOHWOTXHQOOSWGN';
+}
+
+/** Get the deployed LicenseManager contract ID */
+export function getLicenseManagerContractId(): string {
+  return process.env.CONTRACT_LICENSE_MANAGER || 'CD3PN2HLF2ZL6AXLDD3RUE5WCLK3RZDV6LOVB6KREFO3YYLNZAHBKKMF';
+}
+
+/** Get the deployer public key (admin of both contracts) */
+export function getContractAdminPublicKey(): string {
+  return process.env.CONTRACT_DEPLOYER_PUBLIC_KEY || 'GDEB5U56S3WIT3IFIKWTQ2UZPWOLR3W22QHBEV3I4PHBFOHH2BUVYRJH';
+}
+
+/** Get all contract config as an object */
+export function getContractConfig() {
+  return {
+    royaltySplitId: getRoyaltySplitContractId(),
+    licenseManagerId: getLicenseManagerContractId(),
+    adminPublicKey: getContractAdminPublicKey(),
+    network: process.env.STELLAR_NETWORK || 'testnet',
+    networkPassphrase: getNetworkPassphrase(),
+    horizonUrl: HORIZON_URL,
+  };
+}
+

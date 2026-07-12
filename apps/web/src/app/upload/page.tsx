@@ -3,6 +3,9 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useAuth, truncateAddress } from '@/contexts/AuthContext';
 import { Layout } from '@/components/layout/Layout';
+import { DOILookup } from '@/components/academic/DOILookup';
+import { PlagiarismCheck } from '@/components/academic/PlagiarismCheck';
+import { Badge } from '@/components/ui/Badge';
 import { apiRequest } from '@/lib/api';
 
 interface UploadForm {
@@ -27,6 +30,11 @@ export default function UploadPage() {
   const [cover, setCover] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Academic integration state
+  const [paperAuthors, setPaperAuthors] = useState('');
+  const [paperDoi, setPaperDoi] = useState('');
+  const [plagiarismResult, setPlagiarismResult] = useState<any>(null);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>, type: 'file' | 'cover') => {
     const selected = e.target.files?.[0];
@@ -73,7 +81,35 @@ export default function UploadPage() {
         throw new Error(err.error || 'Upload failed');
       }
 
-      setMessage({ type: 'success', text: 'Work uploaded successfully!' });
+      const { karya } = await res.json();
+
+      // Step 2: Publish karya
+      let publishResult = null;
+      try {
+        const publishRes = await fetch(`${API_BASE}/api/v1/karya/${karya.id}/publish`, {
+          method: 'POST',
+          headers: token ? {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          } : { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            confirmOriginal: true,
+            confirmTerms: true,
+          }),
+        });
+
+        if (publishRes.ok) {
+          publishResult = await publishRes.json();
+        }
+      } catch (publishErr) {
+        console.warn('[Upload] Publish error (non-fatal):', publishErr);
+      }
+
+      const successMsg = publishResult
+        ? 'Work uploaded and published successfully!'
+        : 'Work uploaded as draft. Publish from Dashboard.';
+
+      setMessage({ type: 'success', text: successMsg });
       setForm({ judul: '', deskripsi: '', kategori: 'fiksi', harga: '' });
       setFile(null);
       setCover(null);
@@ -140,7 +176,7 @@ export default function UploadPage() {
           <div className="bg-surface-1 border border-hairline p-md">
             <p className="text-body-sm text-ink-muted">
               <strong>Prefer to write directly?</strong>{' '}
-              <a href="/editor" className="text-primary hover:underline">Use our Editor</a> to write, edit, and publish — all in one page.
+              <a href="/editor" className="text-primary hover:underline">Use our Editor</a> to write, edit, and publish: all in one page.
             </p>
           </div>
         </div>
@@ -216,6 +252,36 @@ export default function UploadPage() {
               />
             </div>
 
+            {/* DOI Lookup for Paper category */}
+            {form.kategori === 'paper' && (
+              <div className="mb-lg">
+                <DOILookup
+                  onMetadataFilled={(meta) => {
+                    if (meta.judul) setForm((f) => ({ ...f, judul: meta.judul || '' }));
+                    if (meta.deskripsi) setForm((f) => ({ ...f, deskripsi: meta.deskripsi || '' }));
+                    if (meta.authors) setPaperAuthors(meta.authors);
+                    if (meta.doi) setPaperDoi(meta.doi);
+                  }}
+                  currentTitle={form.judul}
+                  kategori={form.kategori}
+                />
+              </div>
+            )}
+
+            {/* Paper authors (shown for paper category) */}
+            {form.kategori === 'paper' && (
+              <div className="md:col-span-2">
+                <label className="block text-body-sm text-ink-muted mb-xs">Authors (comma-separated)</label>
+                <input
+                  type="text"
+                  value={paperAuthors}
+                  onChange={(e) => setPaperAuthors(e.target.value)}
+                  placeholder="e.g. John Doe, Jane Smith"
+                  className="w-full px-sm py-xs border border-hairline bg-canvas text-ink text-body focus:outline-none focus:border-primary"
+                />
+              </div>
+            )}
+
             {/* Metadata */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
               <div className="md:col-span-2">
@@ -269,6 +335,32 @@ export default function UploadPage() {
                 />
               </div>
             </div>
+
+            {/* Plagiarism Check (optional, for paper category) */}
+            {form.kategori === 'paper' && form.judul && (
+              <div className="md:col-span-2">
+                <PlagiarismCheck
+                  title={form.judul}
+                  description={form.deskripsi}
+                  onCheckComplete={setPlagiarismResult}
+                />
+              </div>
+            )}
+
+            {/* Risk Level Warning */}
+            {plagiarismResult?.riskLevel === 'high' && (
+              <div className="md:col-span-2 border border-semantic-error p-md bg-semantic-error/5">
+                <div className="flex items-center gap-sm mb-xs">
+                  <svg className="w-5 h-5 text-semantic-error flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <span className="text-body-sm font-medium text-semantic-error">
+                    High risk of duplication detected!
+                  </span>
+                </div>
+                <p className="text-body-sm text-ink-muted">{plagiarismResult.recommendation}</p>
+              </div>
+            )}
 
             {/* Submit */}
             <div className="flex gap-md">

@@ -4,9 +4,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth, truncateAddress } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
+import { BadgeShowcase } from '@/components/ui/UserBadge';
+import { useWalletBadges } from '@/hooks/useBadges';
 
 export function ConnectWallet() {
   const { user, walletAddress, isConnected, isConnecting, isFreighterAvailable, authMethod, error, connectFreighter, disconnect } = useAuth();
+  const { badges } = useWalletBadges(isConnected ? walletAddress : null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -56,6 +59,13 @@ export function ConnectWallet() {
               <div className="px-md py-sm border-b border-hairline">
                 <p className="text-body-sm text-ink">{user.nama}</p>
                 {user.email && <p className="text-caption text-ink-subtle">{user.email}</p>}
+              </div>
+            )}
+            {/* Badge Showcase */}
+            {badges.length > 0 && (
+              <div className="px-md py-sm border-b border-hairline">
+                <p className="text-caption text-ink-subtle mb-xs">Badges ({badges.length})</p>
+                <BadgeShowcase badges={badges} max={8} size="sm" />
               </div>
             )}
             <a href="/dashboard" className="block px-md py-sm text-body-sm text-ink hover:bg-surface-1 transition-colors" onClick={() => setDropdownOpen(false)}>

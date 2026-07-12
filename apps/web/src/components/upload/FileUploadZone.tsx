@@ -148,7 +148,7 @@ export function FileUploadZone({
           <p className="text-body text-ink">{label}</p>
           <p className="text-body-sm text-ink-muted">{description}</p>
           <p className="text-caption text-ink-subtle">
-            Supports PDF, DOCX, TXT — Max {maxSizeMB}MB
+            Supports PDF, DOCX, TXT (Max {maxSizeMB}MB)
           </p>
         </div>
       )}

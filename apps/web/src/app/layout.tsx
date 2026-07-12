@@ -3,7 +3,7 @@ import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 
 export const metadata: Metadata = {
-  title: 'Jingga — Publication & Royalty Platform',
+  title: 'Jingga | Publication & Royalty Platform',
   description:
     'A publication and royalty platform for independent writers, researchers, and creators. Built on Stellar.',
 };

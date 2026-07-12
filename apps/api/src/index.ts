@@ -1,5 +1,9 @@
 import dotenv from 'dotenv';
+import path from 'path';
+
+// Load .env — handles both CWDs (running from root via pnpm OR directly from apps/api/)
 dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), 'apps/api/.env') });
 
 import express from 'express';
 import cors from 'cors';
@@ -12,6 +16,9 @@ import marketplaceRoutes from './routes/marketplace';
 import paymentRoutes from './routes/payments';
 import dashboardRoutes from './routes/dashboard';
 import readerRoutes from './routes/reader';
+import licenseRoutes from './routes/license';
+import badgeRoutes from './routes/badges';
+import academicRoutes from './routes/academic';
 
 const app: express.Express = express();
 const PORT = process.env.PORT || 3001;
@@ -34,6 +41,9 @@ app.use('/api/v1/marketplace', marketplaceRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/reader', readerRoutes);
+app.use('/api/v1/licenses', licenseRoutes);
+app.use('/api/v1/badges', badgeRoutes);
+app.use('/api/v1/academic', academicRoutes);
 
 // Health check
 app.get('/api/v1/health', (_req, res) => {

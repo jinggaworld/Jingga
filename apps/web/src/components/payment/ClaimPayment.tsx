@@ -134,8 +134,8 @@ export function ClaimPayment({
     return (
       <div className="bg-canvas border border-hairline p-xl">
         <div className="flex items-center gap-md mb-lg">
-          <div className="w-10 h-10 rounded-full bg-accent-soft flex items-center justify-center">
-            <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-10 h-10 bg-semantic-success/10 flex items-center justify-center">
+            <svg className="w-6 h-6 text-semantic-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -145,7 +145,7 @@ export function ClaimPayment({
           </div>
         </div>
 
-        <div className="bg-surface-2 p-md mb-lg">
+        <div className="bg-surface-1 p-md mb-lg">
           <div className="flex items-center justify-between text-body-sm">
             <span className="text-ink-muted">Tx Hash</span>
             <a
@@ -165,7 +165,7 @@ export function ClaimPayment({
               href={result.accessUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 px-lg py-md bg-accent text-white text-body text-center hover:bg-accent-hover transition-colors"
+              className="flex-1 px-lg py-md bg-primary text-on-primary text-body text-center hover:bg-primary-hover transition-colors"
             >
               Download File
             </a>
@@ -185,10 +185,10 @@ export function ClaimPayment({
 
   if (state === 'error') {
     return (
-      <div className="bg-canvas border border-error p-xl">
+      <div className="bg-canvas border border-semantic-error p-xl">
         <div className="flex items-center gap-md mb-lg">
-          <div className="w-10 h-10 rounded-full bg-error-soft flex items-center justify-center">
-            <svg className="w-6 h-6 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-10 h-10 bg-semantic-error/10 flex items-center justify-center">
+            <svg className="w-6 h-6 text-semantic-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
@@ -201,7 +201,7 @@ export function ClaimPayment({
         <div className="flex gap-md">
           <button
             onClick={handlePurchase}
-            className="flex-1 px-lg py-md bg-accent text-white text-body hover:bg-accent-hover transition-colors"
+            className="flex-1 px-lg py-md bg-primary text-on-primary text-body hover:bg-primary-hover transition-colors"
           >
             Try Again
           </button>
@@ -249,15 +249,15 @@ export function ClaimPayment({
         Pay {harga} XLM to access &ldquo;{judul}&rdquo; using escrow
       </p>
 
-      <div className="bg-surface-2 p-md mb-lg text-body-sm text-ink-muted">
+      <div className="bg-surface-1 p-md mb-lg text-body-sm text-ink-muted">
         <p>Claimable Balance is Stellar's escrow mechanism. Payment will be held until the claim succeeds.</p>
       </div>
 
       <button
         onClick={handlePurchase}
-        className="w-full px-lg py-md bg-accent text-white text-body font-medium hover:bg-accent-hover transition-colors"
+        className="w-full px-lg py-md bg-primary text-on-primary text-body font-medium hover:bg-primary-hover transition-colors"
       >
-        Create & Claim Balance — {harga} XLM
+        Create &amp; Claim Balance: {harga} XLM
       </button>
     </div>
   );

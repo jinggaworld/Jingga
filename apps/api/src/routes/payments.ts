@@ -18,6 +18,14 @@ import {
   CLAIMABLE_ERRORS,
 } from '../services/claimableBalance';
 import { supabaseAdmin } from '../lib/supabase';
+import {
+  getPathPaymentQuote,
+  initiatePathPayment,
+  confirmPathPayment,
+  getExchangeRates,
+  PathPaymentError,
+  PATH_PAYMENT_ERRORS,
+} from '../services/pathPayment';
 
 const router: ReturnType<typeof Router> = Router();
 
@@ -379,6 +387,126 @@ router.get('/claimable/:balanceId', requireAuth, async (req: AuthRequest, res: R
   } catch (error) {
     console.error('[Payments] Claimable status error:', error);
     res.status(500).json({ error: 'Failed to get balance status' });
+  }
+});
+
+// ============================================================
+// Path Payment (Cross-currency via Stellar DEX)
+// ============================================================
+
+// GET /api/v1/payments/rates — Get current exchange rates
+router.get('/rates', async (_req: Request, res: Response) => {
+  try {
+    const rates = await getExchangeRates();
+    res.json({ rates, updated_at: new Date().toISOString() });
+  } catch (error) {
+    console.error('[Payments] Rates error:', error);
+    res.status(500).json({ error: 'Failed to fetch rates' });
+  }
+});
+
+// POST /api/v1/payments/path/quote — Get a path payment quote
+router.post('/path/quote', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { source_asset, source_amount } = req.body;
+    if (!source_asset || !source_amount) {
+      res.status(400).json({ error: 'source_asset and source_amount are required' });
+      return;
+    }
+
+    const quote = await getPathPaymentQuote(source_asset, source_amount);
+    res.json({ quote });
+  } catch (error) {
+    console.error('[Payments] Path quote error:', error);
+    if (error instanceof PathPaymentError) {
+      res.status(error.status).json({ error: error.message, code: error.code });
+      return;
+    }
+    res.status(500).json({ error: 'Failed to get quote' });
+  }
+});
+
+// POST /api/v1/payments/path/initiate — Build unsigned XDR for path payment
+router.post('/path/initiate', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: PAYMENT_ERRORS.USER_NOT_AUTHENTICATED.message });
+      return;
+    }
+
+    const { karya_id, source_asset, source_amount } = req.body;
+    if (!karya_id || !source_asset || !source_amount) {
+      res.status(400).json({ error: 'karya_id, source_asset, and source_amount are required' });
+      return;
+    }
+
+    if (!supabaseAdmin) {
+      res.status(500).json({ error: 'Database not configured' });
+      return;
+    }
+
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('wallet_address')
+      .eq('id', req.user.sub)
+      .single();
+
+    if (!user?.wallet_address) {
+      res.status(400).json({ error: 'Wallet address not found' });
+      return;
+    }
+
+    const result = await initiatePathPayment(user.wallet_address, karya_id, source_asset, source_amount);
+    res.json(result);
+  } catch (error) {
+    console.error('[Payments] Path initiate error:', error);
+    if (error instanceof PathPaymentError) {
+      res.status(error.status).json({ error: error.message, code: error.code });
+      return;
+    }
+    res.status(500).json({ error: 'Failed to initiate path payment' });
+  }
+});
+
+// POST /api/v1/payments/path/confirm — Submit signed path payment
+router.post('/path/confirm', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: PAYMENT_ERRORS.USER_NOT_AUTHENTICATED.message });
+      return;
+    }
+
+    const { signed_xdr, karya_id, source_asset } = req.body;
+    if (!signed_xdr || !karya_id) {
+      res.status(400).json({ error: 'signed_xdr and karya_id are required' });
+      return;
+    }
+
+    if (!supabaseAdmin) {
+      res.status(500).json({ error: 'Database not configured' });
+      return;
+    }
+
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('wallet_address')
+      .eq('id', req.user.sub)
+      .single();
+
+    if (!user?.wallet_address) {
+      res.status(400).json({ error: 'Wallet address not found' });
+      return;
+    }
+
+    const result = await confirmPathPayment(signed_xdr, karya_id, user.wallet_address, source_asset || 'USDC');
+    res.json(result);
+  } catch (error) {
+    console.error('[Payments] Path confirm error:', error);
+    if (error instanceof PathPaymentError) {
+      res.status(error.status).json({ error: error.message, code: error.code });
+      return;
+    }
+    res.status(500).json({ error: 'Failed to confirm path payment' });
   }
 });
 

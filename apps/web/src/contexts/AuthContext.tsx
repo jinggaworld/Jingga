@@ -8,7 +8,7 @@ import {
   requestAccess,
   truncateAddress,
 } from '@/lib/freighter';
-import { API_BASE } from '@/lib/api';
+import { API_BASE, apiRequest } from '@/lib/api';
 
 interface User {
   id: string;
@@ -33,6 +33,7 @@ interface AuthState {
   wallet: WalletInfo | null;
   isConnected: boolean;
   isConnecting: boolean;
+  isRestoring: boolean;
   isFreighterAvailable: boolean;
   authMethod: 'freighter' | 'email' | null;
   error: string | null;
@@ -57,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(true);
   const [isFreighterAvailable, setIsFreighterAvailable] = useState(false);
   const [authMethod, setAuthMethod] = useState<'freighter' | 'email' | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -96,13 +98,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         })
         .catch(() => {
-          localStorage.removeItem(TOKEN_KEY);
-          localStorage.removeItem(WALLET_KEY);
-          localStorage.removeItem(AUTH_METHOD_KEY);
-          setToken(null);
-          setWalletAddress(null);
-          setAuthMethod(null);
+          // Network error — keep saved session, user stays logged in
+          console.warn('[Auth] Could not verify session, using cached data');
+        })
+        .finally(() => {
+          setIsRestoring(false);
         });
+    } else {
+      setIsRestoring(false);
     }
   }, []);
 
@@ -158,6 +161,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData);
       setWallet({ publicKey, isFunded: true, isCustodial: false });
       setAuthMethod('freighter');
+
+      // Auto-assign onboarding badges (non-blocking)
+      apiRequest('/api/v1/badges/onboard', {
+        method: 'POST',
+        body: JSON.stringify({ auth_method: 'freighter' }),
+      }).catch(() => {});
     } catch (err: any) {
       console.error('[Auth] Freighter connect error:', err);
       setError(err.message || 'Failed to connect wallet');
@@ -192,6 +201,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData);
       setWallet({ ...walletData, isCustodial: true });
       setAuthMethod('email');
+
+      // Auto-assign onboarding badges (non-blocking)
+      apiRequest('/api/v1/badges/onboard', {
+        method: 'POST',
+        body: JSON.stringify({ auth_method: 'email' }),
+      }).catch(() => {});
     } catch (err: any) {
       console.error('[Auth] Register error:', err);
       setError(err.message || 'Registration failed');
@@ -227,6 +242,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData);
       setWallet({ ...walletData, isCustodial: true });
       setAuthMethod('email');
+
+      // Auto-assign onboarding badges for returning user (non-blocking, will be no-op if already assigned)
+      apiRequest('/api/v1/badges/onboard', {
+        method: 'POST',
+        body: JSON.stringify({ auth_method: 'email' }),
+      }).catch(() => {});
     } catch (err: any) {
       console.error('[Auth] Login error:', err);
       setError(err.message || 'Login failed');
@@ -255,6 +276,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         walletAddress,
         wallet,
+        isRestoring,
         isConnected: !!token && !!user,
         isConnecting,
         isFreighterAvailable,

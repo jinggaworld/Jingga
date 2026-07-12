@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { supabaseAdmin } from '../lib/supabase';
 import { generateKeypair, encryptPrivateKey, hashPassword, verifyPassword } from '../lib/crypto';
 import { signJWT } from '../middleware/auth';
+import { fundTestnetAccount } from '../lib/stellar';
 import { registerSchema, loginSchema } from '../schemas/auth';
 
 const router: ReturnType<typeof Router> = Router();
@@ -78,6 +79,19 @@ router.post('/register', async (req: Request, res: Response) => {
 
     if (walletError) {
       console.error('[Auth] Wallet creation error:', walletError);
+    }
+
+    // Fund wallet via Friendbot (non-blocking - don't fail registration if this fails)
+    try {
+      await fundTestnetAccount(publicKey);
+      console.log('[Auth] Wallet funded via Friendbot:', publicKey);
+      await supabaseAdmin
+        .from('custodial_wallets')
+        .update({ is_funded: true })
+        .eq('user_id', user.id);
+    } catch (fundError) {
+      console.warn('[Auth] Friendbot funding failed (wallet can be funded later):', fundError);
+      // Non-fatal: wallet can be funded when user first needs to transact
     }
 
     // Generate JWT

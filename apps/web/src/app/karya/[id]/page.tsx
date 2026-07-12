@@ -2,14 +2,18 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { Layout } from '@/components/layout/Layout';
 import { KaryaCover } from '@/components/karya/KaryaCover';
 import { KaryaInfo } from '@/components/karya/KaryaInfo';
 import { KaryaProof } from '@/components/karya/KaryaProof';
 import { KaryaDetails } from '@/components/karya/KaryaDetails';
 import { KaryaCollaborators } from '@/components/karya/KaryaCollaborators';
 import { BuyButton } from '@/components/karya/BuyButton';
+import { LicenseInfoCard } from '@/components/karya/LicenseInfoCard';
+import { KaryaPreview } from '@/components/karya/KaryaPreview';
 import { Spinner } from '@/components/ui/Spinner';
 import { useAuth } from '@/contexts/AuthContext';
+import { API_BASE } from '@/lib/api';
 
 interface KaryaData {
   id: string;
@@ -55,7 +59,7 @@ export default function KaryaDetailPage() {
   useEffect(() => {
     if (!params.id) return;
 
-    fetch(`/api/v1/karya/${params.id}`)
+    fetch(`${API_BASE}/api/v1/karya/${params.id}`)
       .then((res) => {
         if (!res.ok) throw new Error('Work not found');
         return res.json();
@@ -68,7 +72,7 @@ export default function KaryaDetailPage() {
   // Record view
   useEffect(() => {
     if (karya?.id) {
-      fetch(`/api/v1/karya/${karya.id}/view`, {
+      fetch(`${API_BASE}/api/v1/karya/${karya.id}/view`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ viewer_wallet: walletAddress }),
@@ -78,40 +82,32 @@ export default function KaryaDetailPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-surface-1 flex items-center justify-center">
-        <Spinner size="lg" />
-      </main>
+      <Layout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <Spinner size="lg" />
+        </div>
+      </Layout>
     );
   }
 
   if (error || !karya) {
     return (
-      <main className="min-h-screen bg-surface-1 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-headline text-ink mb-md">Work Not Found</h1>
-          <p className="text-body text-ink-muted mb-lg">{error || 'This work does not exist or has been archived.'}</p>
-          <a href="/marketplace" className="text-primary hover:underline">Back to Marketplace</a>
+      <Layout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-headline text-ink mb-md">Work Not Found</h1>
+            <p className="text-body text-ink-muted mb-lg">{error || 'This work does not exist or has been archived.'}</p>
+            <a href="/marketplace" className="text-primary hover:underline">Back to Marketplace</a>
+          </div>
         </div>
-      </main>
+      </Layout>
     );
   }
 
   const isOwner = walletAddress === karya.issuer_wallet;
 
   return (
-    <main className="min-h-screen bg-surface-1">
-      {/* Top Navigation */}
-      <nav className="border-b border-hairline bg-canvas py-sm px-lg sticky top-0 z-50">
-        <div className="mx-auto max-w-[1584px] flex items-center justify-between">
-          <a href="/" className="text-headline font-semibold text-ink tracking-tight">Jingga</a>
-          <div className="flex items-center gap-xl text-body-sm">
-            <a href="/marketplace" className="text-ink-muted hover:text-primary transition-colors">Marketplace</a>
-            <a href="/dashboard" className="text-ink-muted hover:text-primary transition-colors">Dashboard</a>
-            <a href="/upload" className="text-ink-muted hover:text-primary transition-colors">Upload</a>
-          </div>
-        </div>
-      </nav>
-
+    <Layout>
       <div className="mx-auto max-w-[1584px] py-xl px-lg">
         {/* Hero Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-xl mb-xl">
@@ -128,6 +124,7 @@ export default function KaryaDetailPage() {
               kategori={karya.kategori}
               harga={karya.harga}
               total_sales={karya.total_sales}
+              issuerWallet={karya.issuer_wallet}
             />
 
             <div className="mt-auto">
@@ -164,6 +161,25 @@ export default function KaryaDetailPage() {
           <KaryaProof proof={karya.proof} txHash={karya.stellar_tx_hash} />
         </div>
 
+        {/* File Preview */}
+        <div className="mb-xl">
+          <KaryaPreview
+            fileUrl={karya.file_url}
+            fileType={karya.file_type}
+            judul={karya.judul}
+          />
+        </div>
+
+        {/* License Info Card */}
+        <div className="mb-xl">
+          <LicenseInfoCard
+            karyaId={karya.id}
+            issuerWallet={karya.issuer_wallet}
+            userWallet={walletAddress}
+            isOwner={isOwner}
+          />
+        </div>
+
         {/* Collaborators */}
         {karya.collaborators.length > 0 && (
           <div className="mb-xl">
@@ -171,6 +187,6 @@ export default function KaryaDetailPage() {
           </div>
         )}
       </div>
-    </main>
+    </Layout>
   );
 }

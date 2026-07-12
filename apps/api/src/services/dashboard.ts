@@ -88,7 +88,7 @@ export async function getRecentTransactions(walletAddress: string, limit: number
 
   const { data: transactions, error } = await supabaseAdmin
     .from('transactions')
-    .select('id, karya_id, buyer_wallet, jumlah, tx_hash, status, created_at, karya(id, judul, cover_image_url)')
+    .select('id, karya_id, buyer_wallet, jumlah, stellar_tx_hash, status, created_at, karya!inner(id, judul, cover_image_url)')
     .eq('seller_wallet', walletAddress)
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -105,11 +105,11 @@ export async function getRecentTransactions(walletAddress: string, limit: number
     karya_cover: (tx.karya as any)?.cover_image_url || null,
     buyer_wallet: tx.buyer_wallet,
     jumlah: tx.jumlah,
-    tx_hash: tx.tx_hash,
+    tx_hash: tx.stellar_tx_hash,
     status: tx.status,
     created_at: tx.created_at,
-    explorer_url: tx.tx_hash
-      ? `https://stellar.expert/testnet/tx/${tx.tx_hash}`
+    explorer_url: tx.stellar_tx_hash
+      ? `https://stellar.expert/testnet/tx/${tx.stellar_tx_hash}`
       : null,
   }));
 }
@@ -169,7 +169,7 @@ export async function getTransactionHistory(
 
   let query = supabaseAdmin
     .from('transactions')
-    .select('id, karya_id, buyer_wallet, jumlah, tx_hash, status, created_at, karya(id, judul)', { count: 'exact' })
+    .select('id, karya_id, buyer_wallet, jumlah, stellar_tx_hash, status, created_at, karya!inner(id, judul)', { count: 'exact' })
     .eq('seller_wallet', walletAddress)
     .eq('status', 'confirmed');
 
@@ -197,11 +197,11 @@ export async function getTransactionHistory(
       karya_judul: (tx.karya as any)?.judul || 'Unknown',
       buyer_wallet: tx.buyer_wallet,
       jumlah: tx.jumlah,
-      tx_hash: tx.tx_hash,
+      tx_hash: tx.stellar_tx_hash,
       status: tx.status,
       created_at: tx.created_at,
-      explorer_url: tx.tx_hash
-        ? `https://stellar.expert/testnet/tx/${tx.tx_hash}`
+      explorer_url: tx.stellar_tx_hash
+        ? `https://stellar.expert/testnet/tx/${tx.stellar_tx_hash}`
         : null,
     })),
     pagination: {

@@ -1,0 +1,19 @@
+[package]
+name = "license-manager"
+version = "1.0.0"
+edition = "2021"
+description = "Jingga License Manager - On-chain license management with resale royalty for Stellar"
+
+[lib]
+crate-type = ["cdylib"]
+doctest = false
+
+[dependencies]
+soroban-sdk = "22.0.0"
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+lto = true
+debug = false
+codegen-units = 1

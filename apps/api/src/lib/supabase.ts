@@ -1,4 +1,10 @@
+import dotenv from 'dotenv';
+import path from 'path';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+
+// Load .env FIRST before reading env vars (ESM hoists imports, so dotenv in index.ts runs too late)
+dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), 'apps/api/.env') });
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;

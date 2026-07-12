@@ -2,23 +2,19 @@
 
 import React from 'react';
 import { useAuth, truncateAddress } from '@/contexts/AuthContext';
+import { usePendingSignatures } from '@/hooks/usePendingSignatures';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { walletAddress, isConnected, isConnecting, authMethod, error, connectFreighter, disconnect } = useAuth();
+  const { walletAddress, isConnected, isConnecting, isRestoring, authMethod, error, connectFreighter, disconnect } = useAuth();
+  const { data: pendingSignatures } = usePendingSignatures();
+  const pendingCount = pendingSignatures?.count || 0;
 
   return (
     <div className="min-h-screen bg-canvas">
-      {/* Utility Bar */}
-      <div className="bg-surface-1 py-xxs px-lg text-caption text-ink-muted">
-        <div className="mx-auto max-w-[1584px] flex items-center justify-between">
-          <span>Jingga — Stellar Testnet</span>
-          <span>Publication & Royalty Platform</span>
-        </div>
-      </div>
 
       {/* Top Navigation */}
       <nav className="border-b border-hairline bg-canvas py-sm px-lg sticky top-0 z-50">
@@ -30,8 +26,13 @@ export function Layout({ children }: LayoutProps) {
             <a href="/marketplace" className="text-ink-muted hover:text-primary transition-colors">
               Marketplace
             </a>
-            <a href="/dashboard" className="text-ink-muted hover:text-primary transition-colors">
+            <a href="/dashboard" className="text-ink-muted hover:text-primary transition-colors relative">
               Dashboard
+              {pendingCount > 0 && (
+                <span className="absolute -top-1.5 -right-3 bg-semantic-error text-white text-[10px] font-bold min-w-[16px] h-4 flex items-center justify-center px-1">
+                  {pendingCount > 99 ? '99+' : pendingCount}
+                </span>
+              )}
             </a>
             <a href="/editor" className="text-ink-muted hover:text-primary transition-colors">
               Editor
@@ -46,7 +47,9 @@ export function Layout({ children }: LayoutProps) {
 
           {/* Wallet Connection */}
           <div className="flex items-center gap-sm">
-            {isConnecting ? (
+            {isRestoring ? (
+              <span className="text-body-sm text-ink-subtle">Checking session...</span>
+            ) : isConnecting ? (
               <span className="text-body-sm text-ink-muted">Connecting...</span>
             ) : isConnected && walletAddress ? (
               <div className="flex items-center gap-sm">
@@ -64,7 +67,6 @@ export function Layout({ children }: LayoutProps) {
               </div>
             ) : (
               <>
-                {/* Always show Connect Wallet — let the connection attempt handle errors */}
                 <button
                   onClick={connectFreighter}
                   className="bg-primary text-on-primary text-button py-sm px-md rounded-none hover:bg-primary-hover transition-colors"

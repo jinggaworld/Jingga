@@ -8,6 +8,7 @@ import { generateAssetCode } from '../services/assetCode';
 import { createKaryaSchema, updateKaryaSchema } from '../schemas/karya';
 import { KARYA_ERRORS } from '../errors/KaryaError';
 import { verifyAuthorship } from '../services/verification';
+import { mintKaryaAsset, buildMintTransaction } from '../services/minting';
 import { getGatewayUrl } from '../lib/ipfs';
 
 const storage = multer.memoryStorage();
@@ -130,7 +131,7 @@ router.post('/', requireAuth, upload.fields([
   }
 });
 
-// POST /api/v1/karya/:id/publish — Publish karya
+// POST /api/v1/karya/:id/publish — Publish karya & mint on Stellar
 router.post('/:id/publish', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user || !supabaseAdmin) {
@@ -167,16 +168,61 @@ router.post('/:id/publish', requireAuth, async (req: AuthRequest, res: Response)
       return;
     }
 
+    // Step 1: Build unsigned mint transaction (for Freighter signing) or auto-mint
+    let stellarTxHash: string | null = null;
+    const requiresSigning = req.body.requiresSigning === true;
+
+    try {
+      if (requiresSigning) {
+        // Return unsigned XDR for frontend to sign with Freighter
+        const xdr = await buildMintTransaction(
+          karya.issuer_wallet,
+          karya.stellar_asset_code,
+          karya.id
+        );
+
+        res.json({
+          xdr,
+          requiresSigning: true,
+          karya_id: karya.id,
+          asset_code: karya.stellar_asset_code,
+          message: 'Please sign the transaction with your Freighter wallet',
+        });
+        return;
+      } else {
+        // Auto-mint: submit signed transaction
+        const signedXdr = req.body.signed_xdr;
+        if (signedXdr) {
+          // Submit externally signed transaction
+          const stellar = await import('@stellar/stellar-sdk');
+          const { getServer, getNetworkPassphrase } = await import('../lib/stellar');
+          const server = getServer();
+          const transaction = stellar.TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase());
+          const result = await server.submitTransaction(transaction);
+          stellarTxHash = result.hash;
+        }
+      }
+    } catch (mintError) {
+      console.warn('[Karya] Mint error (non-fatal):', mintError);
+      // Karya tetap di-publish meskipun mint gagal (bisa di-retry)
+    }
+
+    // Step 2: Update status to published
+    const updatePayload: any = {
+      status: 'published',
+      published_at: new Date().toISOString(),
+    };
+    if (stellarTxHash) {
+      updatePayload.stellar_tx_hash = stellarTxHash;
+    }
+
     const { error: updateError } = await supabaseAdmin
       .from('karya')
-      .update({
-        status: 'published',
-        published_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq('id', id);
 
     if (updateError) {
-      console.error('[Karya] Publish error:', updateError);
+      console.error('[Karya] Publish update error:', updateError);
       res.status(500).json({ error: 'Failed to publish work' });
       return;
     }
@@ -187,7 +233,11 @@ router.post('/:id/publish', requireAuth, async (req: AuthRequest, res: Response)
         status: 'published',
         published_at: new Date().toISOString(),
         stellar_asset_code: karya.stellar_asset_code,
+        stellar_tx_hash: stellarTxHash,
       },
+      explorer_url: stellarTxHash
+        ? `https://stellar.expert/testnet/tx/${stellarTxHash}`
+        : null,
     });
   } catch (error) {
     console.error('[Karya] Publish error:', error);

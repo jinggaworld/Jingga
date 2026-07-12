@@ -29,7 +29,7 @@ export async function getReaderDashboard(walletAddress: string) {
   // Get all purchases
   const { data: purchases, error: purchaseError } = await supabaseAdmin
     .from('transactions')
-    .select('id, karya_id, jumlah, tx_hash, created_at, karya(id, judul, cover_image_url, kategori, issuer_wallet, users!issuer_wallet(nama))')
+    .select('id, karya_id, jumlah, stellar_tx_hash, created_at, karya!inner(id, judul, cover_image_url, kategori, issuer_wallet, users!issuer_wallet(nama))')
     .eq('buyer_wallet', walletAddress)
     .eq('status', 'confirmed')
     .order('created_at', { ascending: false });
@@ -64,7 +64,7 @@ export async function getReaderDashboard(walletAddress: string) {
       issuer_name: author?.nama || 'Unknown Author',
       jumlah: tx.jumlah,
       purchased_at: tx.created_at,
-      tx_hash: tx.tx_hash,
+      tx_hash: tx.stellar_tx_hash,
     };
   });
 
@@ -123,7 +123,7 @@ export async function getPurchaseList(
 
   let query = supabaseAdmin
     .from('transactions')
-    .select('id, karya_id, jumlah, tx_hash, status, created_at, karya(id, judul, cover_image_url, kategori, harga, issuer_wallet, users!issuer_wallet(nama))', { count: 'exact' })
+    .select('id, karya_id, jumlah, stellar_tx_hash, status, created_at, karya!inner(id, judul, cover_image_url, kategori, harga, issuer_wallet, users!issuer_wallet(nama))', { count: 'exact' })
     .eq('buyer_wallet', walletAddress)
     .eq('status', 'confirmed');
 
@@ -153,9 +153,9 @@ export async function getPurchaseList(
         issuer_name: author?.nama || 'Unknown Author',
         jumlah: tx.jumlah,
         purchased_at: tx.created_at,
-        tx_hash: tx.tx_hash,
-        explorer_url: tx.tx_hash
-          ? `https://stellar.expert/testnet/tx/${tx.tx_hash}`
+        tx_hash: tx.stellar_tx_hash,
+        explorer_url: tx.stellar_tx_hash
+          ? `https://stellar.expert/testnet/tx/${tx.stellar_tx_hash}`
           : null,
       };
     }),

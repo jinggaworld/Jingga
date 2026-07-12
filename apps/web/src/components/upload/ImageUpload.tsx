@@ -97,7 +97,7 @@ export function ImageUpload({ onUpload, label = 'Cover Image' }: ImageUploadProp
       )}
 
       {error && <p className="text-caption text-semantic-error">{error}</p>}
-      <p className="text-caption text-ink-subtle">JPEG, PNG, or WebP — Max 5MB</p>
+      <p className="text-caption text-ink-subtle">JPEG, PNG, or WebP (Max 5MB)</p>
     </div>
   );
 }

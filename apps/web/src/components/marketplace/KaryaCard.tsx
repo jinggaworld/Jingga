@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { type MarketplaceKarya } from '@/hooks/useMarketplace';
 import { Badge } from '@/components/ui/Badge';
+import { BadgeShowcase } from '@/components/ui/UserBadge';
+import { API_BASE } from '@/lib/api';
 
 interface KaryaCardProps {
   karya: MarketplaceKarya;
@@ -14,6 +16,29 @@ const kategoriLabels: Record<string, string> = {
   puisi: 'Poetry',
   'non-fiksi': 'Non-Fiction',
 };
+
+function CardAuthorBadges({ wallet }: { wallet: string }) {
+  const [badges, setBadges] = useState<any[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  const loadBadges = useCallback(async () => {
+    if (loaded) return;
+    setLoaded(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/badges/wallet/${wallet}`);
+      if (res.ok) {
+        const data = await res.json();
+        setBadges(data.badges || []);
+      }
+    } catch {}
+  }, [wallet, loaded]);
+
+  return (
+    <span onMouseEnter={loadBadges}>
+      {badges.length > 0 && <BadgeShowcase badges={badges} max={2} size="sm" />}
+    </span>
+  );
+}
 
 export function KaryaCard({ karya }: KaryaCardProps) {
   return (
@@ -46,7 +71,10 @@ export function KaryaCard({ karya }: KaryaCardProps) {
       {/* Content */}
       <div className="p-md">
         <h3 className="text-card-title text-ink mb-xs line-clamp-2">{karya.judul}</h3>
-        <p className="text-body-sm text-ink-muted mb-sm">{karya.issuer_name}</p>
+        <div className="flex items-center gap-1 mb-sm">
+          <p className="text-body-sm text-ink-muted">{karya.issuer_name}</p>
+          <CardAuthorBadges wallet={karya.issuer_wallet} />
+        </div>
 
         <div className="flex items-center justify-between">
           <span className="text-body-emphasis text-primary">{karya.harga} XLM</span>

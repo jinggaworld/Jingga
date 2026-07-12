@@ -86,7 +86,7 @@ export default function PurchaseHistory({ purchases, loading }: PurchaseHistoryP
                     {purchase.tx_hash.slice(0, 8)}...
                   </a>
                 ) : (
-                  <span className="text-xs text-gray-400">—</span>
+                  <span className="text-xs text-gray-400">-</span>
                 )}
               </td>
             </tr>

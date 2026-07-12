@@ -1,0 +1,14 @@
+/home/jinggaworld/Jingga/contracts/license_manager/target/release/deps/serde-34b8cc0c305d9390.d: /home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /home/jinggaworld/Jingga/contracts/license_manager/target/release/build/serde-658848e313f14c3b/out/private.rs
+
+/home/jinggaworld/Jingga/contracts/license_manager/target/release/deps/libserde-34b8cc0c305d9390.rlib: /home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /home/jinggaworld/Jingga/contracts/license_manager/target/release/build/serde-658848e313f14c3b/out/private.rs
+
+/home/jinggaworld/Jingga/contracts/license_manager/target/release/deps/libserde-34b8cc0c305d9390.rmeta: /home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /home/jinggaworld/Jingga/contracts/license_manager/target/release/build/serde-658848e313f14c3b/out/private.rs
+
+/home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs:
+/home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs:
+/home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs:
+/home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:
+/home/jinggaworld/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs:
+/home/jinggaworld/Jingga/contracts/license_manager/target/release/build/serde-658848e313f14c3b/out/private.rs:
+
+# env-dep:OUT_DIR=/home/jinggaworld/Jingga/contracts/license_manager/target/release/build/serde-658848e313f14c3b/out

@@ -28,3 +28,18 @@ export const ROYALTY_BASIS_POINTS = 10000 as const;
 export const KARYA_CATEGORIES = ['fiksi', 'paper', 'puisi', 'non-fiksi'] as const;
 
 export const STELLAR_EXPLORER_TESTNET_URL = 'https://stellar.expert/testnet' as const;
+
+// ============================================================
+// Soroban Smart Contract Addresses (from deployment)
+// ============================================================
+// Defaults are testnet development addresses from our deploy.
+// API overrides these via env vars (CONTRACT_ROYALTY_SPLIT, CONTRACT_LICENSE_MANAGER).
+export const CONTRACT_ROYALTY_SPLIT_ID =
+  'CDATTT53GBFZZZQOVMGVO63FIM6FGRXGEBIVC4I2OPOHWOTXHQOOSWGN';
+
+export const CONTRACT_LICENSE_MANAGER_ID =
+  'CD3PN2HLF2ZL6AXLDD3RUE5WCLK3RZDV6LOVB6KREFO3YYLNZAHBKKMF';
+
+export const CONTRACT_DEPLOYER_PUBLIC_KEY =
+  'GDEB5U56S3WIT3IFIKWTQ2UZPWOLR3W22QHBEV3I4PHBFOHH2BUVYRJH';
+

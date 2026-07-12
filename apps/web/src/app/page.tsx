@@ -13,7 +13,7 @@ export default function HomePage() {
           </h1>
           <p className="text-body-lg text-ink-muted mb-xl max-w-2xl">
             A publication & royalty platform for independent writers, researchers, and creators
-            across Southeast Asia. Built on Stellar — instant payments, transparent royalties,
+            across Southeast Asia. Built on Stellar: instant payments, transparent royalties,
             no middlemen.
           </p>
           <div className="flex gap-md">

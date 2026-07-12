@@ -1,0 +1,19 @@
+[package]
+name = "royalty-split"
+version = "1.0.0"
+edition = "2021"
+description = "Jingga Royalty Split - Automatic royalty distribution for authors, editors, and illustrators on Stellar"
+
+[lib]
+crate-type = ["cdylib"]
+doctest = false
+
+[dependencies]
+soroban-sdk = "22.0.0"
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+lto = true
+debug = false
+codegen-units = 1
