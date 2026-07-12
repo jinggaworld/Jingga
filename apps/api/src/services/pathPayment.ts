@@ -9,7 +9,7 @@ function getStablecoins(): Record<string, Stellar.Asset> {
   if (_stablecoins) return _stablecoins;
 
   const assets: Record<string, Stellar.Asset> = {};
-  const usdcIssuer = process.env.USDC_ISSUER || 'GA5ZSEJYB37JDD5G7LYXG7J6ZPBTAWVOV6XKRGJ7SZ7VXZ4OQK3KTLP';
+  const usdcIssuer = process.env.USDC_ISSUER || 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5';
 
   try {
     if (Stellar.StrKey.isValidEd25519PublicKey(usdcIssuer)) {
