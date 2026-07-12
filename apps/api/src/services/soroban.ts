@@ -160,6 +160,10 @@ export interface SorobanInvokeResult {
 /**
  * Build a Soroban invoke transaction and return unsigned XDR.
  * For frontend/Freighter signing.
+ *
+ * CRITICAL: transaksi disimulasi dan di-prepare via Soroban RPC
+ * sebelum dikembalikan. Tanpa prepare(), Soroban RPC akan menolak
+ * karena tidak ada SorobanTransactionData (footprint, resource fee).
  */
 export async function buildSorobanTransaction(
   options: SorobanInvokeOptions,
@@ -172,8 +176,10 @@ export async function buildSorobanTransaction(
     }
 
     const server = getServer();
+    const rpcServer = await getRpcServer();
     const sourceAccount = await server.loadAccount(sourcePublicKey);
 
+    // Step 1: Build base transaction
     const tx = new StellarSdk.TransactionBuilder(sourceAccount, {
       fee,
       networkPassphrase: getNetworkPassphrase(),
@@ -188,7 +194,20 @@ export async function buildSorobanTransaction(
       .setTimeout(300)
       .build();
 
-    return { success: true, xdr: tx.toXDR() };
+    // Step 2: Simulate via Soroban RPC untuk mendapatkan footprint + resource requirements
+    const simulation = await rpcServer.simulateTransaction(tx);
+
+    // Cek error simulasi
+    if (simulation?.error) {
+      console.error(`[Soroban] Simulate error (${method}):`, simulation.error);
+      // Fallback: return unprepared XDR agar user bisa lihat error di Freighter
+      return { success: true, xdr: tx.toXDR() };
+    }
+
+    // Step 3: Prepare transaction — set SorobanTransactionData (footprint, resource fee, etc.)
+    const preparedTx = await rpcServer.prepareTransaction(tx, simulation);
+
+    return { success: true, xdr: preparedTx.toXDR() };
   } catch (error: any) {
     console.error(`[Soroban] Build tx error (${method}):`, error);
     return { success: false, error: error.message || 'Failed to build transaction' };
