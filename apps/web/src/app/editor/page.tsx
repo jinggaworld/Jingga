@@ -118,6 +118,41 @@ export default function EditorPage() {
   const [publishing, setPublishing] = useState(false);
   const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [leaving, setLeaving] = useState(false);
+
+  const handleLeaveRoom = useCallback(() => {
+    setLeaving(true);
+
+    // 1. Disconnect from WebSocket
+    if (providerRef.current) {
+      providerRef.current.disconnect();
+      providerRef.current.destroy();
+      providerRef.current = null;
+    }
+
+    // 2. Destroy Yjs document
+    if (ydocRef.current) {
+      ydocRef.current.destroy();
+      ydocRef.current = null;
+    }
+
+    // 3. Remove room from localStorage cache so it doesn't auto-rejoin
+    try {
+      localStorage.removeItem('jingga_last_room');
+      // Remove from recent rooms too
+      const raw = localStorage.getItem('jingga_recent_rooms');
+      if (raw) {
+        const rooms = JSON.parse(raw).filter((r: any) => r.id !== roomId);
+        localStorage.setItem('jingga_recent_rooms', JSON.stringify(rooms));
+      }
+    } catch {}
+
+    setCollabStatus('disconnected');
+    setLeaving(false);
+
+    // 4. Navigate to join page
+    router.push('/join');
+  }, [roomId, router]);
 
   const handleEditorChange = useCallback((_html: string, _json: unknown) => {
     // Content is managed by the editor internally
@@ -310,11 +345,30 @@ export default function EditorPage() {
                 >
                   Copy link
                 </button>
-                <a href="/join" className="text-ink-subtle hover:text-primary transition-colors ml-xs" title="Join another room">
+                <button
+                  onClick={() => {
+                    const url = `${window.location.origin}/editor?room=${encodeURIComponent(roomId)}`;
+                    navigator.clipboard.writeText(url);
+                    setMessage({ type: 'success', text: 'Room link copied!' });
+                  }}
+                  className="text-primary hover:underline text-caption"
+                  title="Copy room link to clipboard"
+                >
+                  Copy
+                </button>
+                <span className="text-ink-subtle">|</span>
+                <button
+                  onClick={handleLeaveRoom}
+                  disabled={leaving}
+                  className="text-semantic-error hover:underline text-caption disabled:opacity-50"
+                  title="Leave this collaboration room"
+                >
+                  {leaving ? 'Leaving...' : 'Leave'}
+                </button>
+                <a href="/join" className="text-ink-subtle hover:text-primary transition-colors" title="Join another room">
                   <svg className="w-3.5 h-3.5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  Join
                 </a>
               </p>
             </div>
