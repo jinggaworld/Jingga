@@ -60,28 +60,49 @@ export async function isFreighterInstalled(): Promise<boolean> {
  * Wait for Freighter extension to inject its API into window.
  * The extension injects asynchronously after page load.
  * Polls every 500ms for up to maxWait ms.
+ * Also tries importing the npm package as a fallback detection method.
  */
 export async function waitForFreighter(maxWait = 5000): Promise<boolean> {
   if (typeof window === 'undefined') return false;
 
-  // Already detected?
+  // Already detected via window property?
   if ((window as any).freighterApi || (window as any).freighter) {
+    console.log('[Freighter] Detected via window property ✓');
     return true;
   }
 
   const startTime = Date.now();
   return new Promise((resolve) => {
-    const check = () => {
+    const check = async () => {
+      // Check window properties
       if ((window as any).freighterApi || (window as any).freighter) {
         console.log('[Freighter] Extension detected after wait ✓');
         resolve(true);
         return;
       }
+
+      // Try npm package import as fallback
+      const api = await getFreighterApi();
+      if (api && typeof api.isConnected === 'function') {
+        try {
+          const connected = await api.isConnected();
+          if (connected) {
+            console.log('[Freighter] Detected via isConnected() ✓');
+            resolve(true);
+            return;
+          }
+        } catch {
+          // isConnected threw, extension may not be ready
+        }
+      }
+
+      // Timeout check
       if (Date.now() - startTime >= maxWait) {
-        console.log('[Freighter] Timed out waiting for extension');
+        console.log('[Freighter] Timed out waiting for extension after ' + maxWait + 'ms');
         resolve(false);
         return;
       }
+
       setTimeout(check, 500);
     };
     check();
@@ -142,20 +163,29 @@ export async function signMessage(message: string): Promise<string | null> {
 /**
  * Sign a transaction XDR with Freighter wallet.
  * 
+ * Tries npm package first, falls back to window.freighterApi or window.freighter.
  * Freighter v6+ expects the second argument as an options object: { networkPassphrase }.
- * Passing a plain string works with older versions but fails silently with v6.
  */
 export async function signTransaction(xdr: string, network?: string): Promise<string> {
-  const api = await getFreighterApi();
-  if (!api) throw new Error('Freighter is not installed');
+  const opts = network ? { networkPassphrase: network } : undefined;
 
-  if (typeof api.signTransaction === 'function') {
-    // Freighter v6+ uses options object format
-    const opts = network ? { networkPassphrase: network } : undefined;
+  // 1. Try npm package
+  const api = await getFreighterApi();
+  if (api && typeof api.signTransaction === 'function') {
     return await api.signTransaction(xdr, opts);
   }
 
-  throw new Error('Freighter signTransaction is not available');
+  // 2. Try window.freighterApi (Freighter v6+ direct injection)
+  if (typeof (window as any).freighterApi?.signTransaction === 'function') {
+    return await (window as any).freighterApi.signTransaction(xdr, opts);
+  }
+
+  // 3. Try window.freighter (legacy injection)
+  if (typeof (window as any).freighter?.signTransaction === 'function') {
+    return await (window as any).freighter.signTransaction(xdr, opts);
+  }
+
+  throw new Error('Freighter is not installed or not responding');
 }
 
 /**
