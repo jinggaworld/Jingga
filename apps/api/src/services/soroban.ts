@@ -212,17 +212,29 @@ export async function buildSorobanTransaction(
     let simulation = await rpcServer.simulateTransaction(tx);
 
     // Jika simulasi gagal dengan source asli, coba dengan deployer account
+    // Khusus untuk issue_license: original_author.require_auth() di contract
+    // tidak bisa dipenuhi saat source ≠ original_author. Jadi kita perlu
+    // ganti original_author arg (index 2) dengan deployer untuk simulasi.
     if (simulation?.error) {
       console.warn(`[Soroban] Simulate error with original source (${method}):`, simulation.error);
+
+      // Log diagnostic events dari simulation failure pertama
       const diagEvents = (simulation as any)?.events || [];
       if (diagEvents.length > 0) {
-        console.warn(`[Soroban] ${diagEvents.length} diagnostic event(s) from original source simulation`);
+        console.warn(`[Soroban] ${diagEvents.length} diagnostic event(s) emitted from original simulation`);
       }
-      console.warn(`[Soroban] Retrying with deployer account for simulation...`);
 
       try {
         const deployerPk = getContractAdminPublicKey();
         const deployerAccount = await server.loadAccount(deployerPk);
+
+        // Untuk issue_license: original_author ada di arg index 2.
+        // Ganti dengan deployer agar require_auth() bisa dipenuhi saat simulasi.
+        // Untuk method lain yang tidak require_auth(), arg tidak perlu diganti.
+        const isAuthMethod = method === 'issue_license';
+        const simArgs = isAuthMethod
+          ? args.map((arg, i) => (i === 2 ? addressVal(deployerPk) : arg))
+          : args;
 
         const simTx = new StellarSdk.TransactionBuilder(deployerAccount, {
           fee,
@@ -232,26 +244,32 @@ export async function buildSorobanTransaction(
             StellarSdk.Operation.invokeContractFunction({
               contract: contractId,
               function: method,
-              args,
+              args: simArgs,
             }),
           )
           .setTimeout(300)
           .build();
 
-        simulation = await rpcServer.simulateTransaction(simTx);
+        console.warn(`[Soroban] Retrying simulation with deployer account (${method})...`);
+        const deployerSim = await rpcServer.simulateTransaction(simTx);
 
-        if (simulation?.error) {
-          const diagnosticEvents = (simulation as any)?.events || [];
-          console.error(`[Soroban] Simulate error with deployer (${method}):`, simulation.error);
-          if (diagnosticEvents.length > 0) {
-            console.error(`[Soroban] ${diagnosticEvents.length} diagnostic event(s) emitted`);
-          }
-          console.warn(`[Soroban] Both simulations failed — falling back to prepareTransaction without simulation`);
-          // Reset simulation so we fall through to prepareTransaction below
-          simulation = null as any;
+        if (deployerSim?.error) {
+          console.error(`[Soroban] Deployer simulation also failed (${method}):`, deployerSim.error);
+          return {
+            success: false,
+            error: deployerSim.error || 'Simulation failed with all accounts',
+          };
         }
 
-        console.log(`[Soroban] Simulation succeeded with deployer account`);
+        console.log(`[Soroban] Deployer simulation succeeded (${method}) — applying data to original tx`);
+
+        // Deployer simulation succeeded.
+        // Apply SorobanTransactionData (footprint, resource fee) dari deployer
+        // simulation ke original transaction (author sebagai source).
+        // Ini aman karena storage keys contract berdasarkan license_id + karya_id,
+        // BUKAN original_author. Footprint-nya identik.
+        const preparedTx = await rpcServer.prepareTransaction(tx, deployerSim);
+        return { success: true, xdr: preparedTx.toXDR() };
       } catch (retryErr: any) {
         console.error(`[Soroban] Retry simulation error (${method}):`, retryErr);
         return {
