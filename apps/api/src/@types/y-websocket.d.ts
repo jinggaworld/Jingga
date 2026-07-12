@@ -1,5 +1,5 @@
-// Type declarations for @y/websocket-server (JS-only, no official types)
-declare module '@y/websocket-server/utils' {
+// Type declarations for y-websocket bin/utils (JS-only, no official types)
+declare module 'y-websocket/bin/utils' {
   import { WebSocket } from 'ws';
   import { IncomingMessage } from 'http';
 
