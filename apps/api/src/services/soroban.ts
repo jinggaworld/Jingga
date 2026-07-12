@@ -117,14 +117,21 @@ function recipientScVal(
 
 /**
  * LicenseType enum: Exclusive / NonExclusive
- * In Soroban, `#[contracttype]` enums serialize as ScVal::Symbol(variant_name).
+ *
+ * In soroban-sdk v20+, `#[contracttype]` unit enum variants serialize as
+ * `ScVal::Vec([ScVal::Symbol(variant_name)])`, NOT as a naked Symbol.
+ *
+ * See: https://docs.rs/soroban-sdk/latest/soroban_sdk/attr.contracttype.html
  */
 function licenseTypeVal(type: 'exclusive' | 'non-exclusive'): StellarSdk.xdr.ScVal {
-  return symbolVal(type === 'exclusive' ? 'Exclusive' : 'NonExclusive');
+  const variant = type === 'exclusive' ? 'Exclusive' : 'NonExclusive';
+  return StellarSdk.nativeToScVal([variant], { type: 'vec' });
 }
 
 /**
  * LicenseDuration enum: OneYear / FiveYears / Perpetual
+ *
+ * Same encoding: `Vec[Symbol(variant_name)]`
  */
 function licenseDurationVal(duration: string): StellarSdk.xdr.ScVal {
   const map: Record<string, string> = {
@@ -133,7 +140,8 @@ function licenseDurationVal(duration: string): StellarSdk.xdr.ScVal {
     '5years': 'FiveYears',
     perpetual: 'Perpetual',
   };
-  return symbolVal(map[duration] || 'Perpetual');
+  const variant = map[duration] || 'Perpetual';
+  return StellarSdk.nativeToScVal([variant], { type: 'vec' });
 }
 
 // ============================================================
