@@ -362,27 +362,38 @@ export async function executeResale(input: ResaleInput): Promise<ResaleResult> {
 
   const memo = `JINGGA:RESALE:${license_id.slice(0, 8)}`;
 
+  // Calculate fee: BASE_FEE per operation, enough for up to 2 operations
+  const feeStr = String(Number(StellarSdk.BASE_FEE) * 2);
+
   try {
     // 3. Build transaction: BUYER sends funds that get split
-    //    Two separate payment operations from buyer to respective recipients
+    //    Only add payment operations with amount > 0 (Stellar rejects 0-value payments)
     const buyerAccount = await getServer().loadAccount(buyer_wallet);
 
-    const transaction = new StellarSdk.TransactionBuilder(buyerAccount, {
-      fee: StellarSdk.BASE_FEE,
+    const txBuilder = new StellarSdk.TransactionBuilder(buyerAccount, {
+      fee: feeStr,
       networkPassphrase: getNetworkPassphrase(),
-    })
-      // Payment to original author (royalty)
-      .addOperation(StellarSdk.Operation.payment({
+    });
+
+    // Payment to original author (royalty) — skip if 0
+    if (authorRoyalty > 0) {
+      txBuilder.addOperation(StellarSdk.Operation.payment({
         destination: license.original_author_wallet,
         asset: StellarSdk.Asset.native(),
         amount: authorRoyalty.toString(),
-      }))
-      // Payment to seller (rest of sale price)
-      .addOperation(StellarSdk.Operation.payment({
+      }));
+    }
+
+    // Payment to seller — skip if 0
+    if (sellerReceives > 0) {
+      txBuilder.addOperation(StellarSdk.Operation.payment({
         destination: seller_wallet,
         asset: StellarSdk.Asset.native(),
         amount: sellerReceives.toString(),
-      }))
+      }));
+    }
+
+    const transaction = txBuilder
       .addMemo(StellarSdk.Memo.text(memo))
       .setTimeout(300)
       .build();
@@ -404,6 +415,9 @@ export async function executeResale(input: ResaleInput): Promise<ResaleResult> {
     };
   } catch (error: any) {
     console.error('[License] Resale error:', error);
+    if (error.name === 'NotFoundError' || error.constructor?.name === 'NotFoundError' || error.response?.status === 404) {
+      throw new LicenseError('ACCOUNT_NOT_FOUND');
+    }
     if (error.message?.includes('insufficient')) {
       throw new LicenseError('INSUFFICIENT_BALANCE');
     }
@@ -434,7 +448,12 @@ export async function confirmResale(
   let result;
   try {
     result = await getServer().submitTransaction(transaction);
-  } catch (error) {
+  } catch (error: any) {
+    // Log Horizon error details including result_codes for debugging
+    const resultCodes = error?.response?.data?.extras?.result_codes;
+    if (resultCodes) {
+      console.error('[License] Resale submit error — result_codes:', JSON.stringify(resultCodes));
+    }
     console.error('[License] Resale submit error:', error);
     throw new LicenseError('TX_FAILED');
   }
