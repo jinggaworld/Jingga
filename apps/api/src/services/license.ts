@@ -334,9 +334,10 @@ export async function confirmLicensePurchase(
 /**
  * Execute resale of a license with automatic author royalty.
  *
- * Flow: BUYER signs a payment of `sale_price` XLM.
- * - author_royalty (e.g., 10%) goes to original author
- * - seller_receives (e.g., 90%) goes to the current license holder (seller)
+ * Flow: SELLER signs a royalty payment to the original author.
+ * - The seller has received the full `sale_price` from the buyer (off-chain).
+ * - The seller signs a single payment: author_royalty XLM to the original author.
+ * - The buyer pays the seller the full sale price outside this transaction.
  */
 export async function executeResale(input: ResaleInput): Promise<ResaleResult> {
   if (!supabaseAdmin) throw new LicenseError('DATABASE_ERROR');
@@ -354,28 +355,26 @@ export async function executeResale(input: ResaleInput): Promise<ResaleResult> {
   if (license.status !== 'active') throw new LicenseError('LICENSE_NOT_ACTIVE');
   if (license.purchaser_wallet !== seller_wallet) throw new LicenseError('NOT_LICENSE_HOLDER');
 
-  const karya = license.karya as any;
-
-  // 2. Calculate royalty
+  // 2. Calculate royalty (seller pays this to the author)
   const authorRoyalty = Math.round(sale_price * (license.resale_percentage / 100) * 1e6) / 1e6;
   const sellerReceives = Math.round((sale_price - authorRoyalty) * 1e6) / 1e6;
 
   const memo = `JINGGA:RESALE:${license_id.slice(0, 8)}`;
 
-  // Calculate fee: BASE_FEE per operation, enough for up to 2 operations
-  const feeStr = String(Number(StellarSdk.BASE_FEE) * 2);
+  // Fee: single operation (payment to author)
+  const feeStr = String(Number(StellarSdk.BASE_FEE));
 
   try {
-    // 3. Build transaction: BUYER sends funds that get split
-    //    Only add payment operations with amount > 0 (Stellar rejects 0-value payments)
-    const buyerAccount = await getServer().loadAccount(buyer_wallet);
+    // 3. Build transaction: SELLER pays the author royalty
+    //    The SELLER signs this with Freighter (they are the authenticated user)
+    const sellerAccount = await getServer().loadAccount(seller_wallet);
 
-    const txBuilder = new StellarSdk.TransactionBuilder(buyerAccount, {
+    const txBuilder = new StellarSdk.TransactionBuilder(sellerAccount, {
       fee: feeStr,
       networkPassphrase: getNetworkPassphrase(),
     });
 
-    // Payment to original author (royalty) — skip if 0
+    // Seller sends authorRoyalty to the original author as royalty fee
     if (authorRoyalty > 0) {
       txBuilder.addOperation(StellarSdk.Operation.payment({
         destination: license.original_author_wallet,
@@ -384,21 +383,12 @@ export async function executeResale(input: ResaleInput): Promise<ResaleResult> {
       }));
     }
 
-    // Payment to seller — skip if 0
-    if (sellerReceives > 0) {
-      txBuilder.addOperation(StellarSdk.Operation.payment({
-        destination: seller_wallet,
-        asset: StellarSdk.Asset.native(),
-        amount: sellerReceives.toString(),
-      }));
-    }
-
     const transaction = txBuilder
       .addMemo(StellarSdk.Memo.text(memo))
       .setTimeout(300)
       .build();
 
-    // Return unsigned XDR for Freighter (buyer signs)
+    // Return unsigned XDR for Freighter (SELLER signs)
     const xdr = transaction.toXDR();
 
     return {
