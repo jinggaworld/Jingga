@@ -18,7 +18,10 @@
 }
 
 /* ============================================================
-   Paper-like A4 Editor Styling
+   Paper-like A4 Editor with Repeating Page Separators
+   ============================================================
+   Each "page" cycle = 60px top padding + 297mm content + 60px bottom padding + 32px separator gap
+   Total cycle height: calc(297mm + 152px)
    ============================================================ */
 
 .paper-editor-wrapper {
@@ -27,27 +30,63 @@
 }
 
 .paper-editor .ProseMirror {
-  /* A4-like paper sheet */
-  max-width: 210mm;  /* A4 width */
-  min-height: 297mm; /* A4 height */
+  /* A4 width */
+  max-width: 210mm;
+  /* Let content grow beyond one page — gradient creates visual pages */
+  min-height: 297mm;
   margin: 24px auto;
   padding: 60px 72px;
-  background: #ffffff;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.08),
-    0 4px 12px rgba(0, 0, 0, 0.04);
   outline: none;
   position: relative;
+
   /* Typography */
   font-size: 12pt;
   line-height: 1.8;
   color: #161616;
   caret-color: #0f62fe;
+
+  /* Repeating gradient creates stacked A4 pages with visual separators */
+  background:
+    /* Page shadow at each separator (simulates paper stack edge) */
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(60px + 297mm + 54px),        /* just before separator gap */
+      rgba(0, 0, 0, 0.04) calc(60px + 297mm + 54px),
+      rgba(0, 0, 0, 0.04) calc(60px + 297mm + 56px),
+      rgba(0, 0, 0, 0.02) calc(60px + 297mm + 56px),
+      rgba(0, 0, 0, 0.02) calc(60px + 297mm + 60px),
+      transparent calc(60px + 297mm + 60px)
+    ),
+    /* White page background + separator line + gap */
+    repeating-linear-gradient(
+      to bottom,
+      #ffffff 0,                                           /* top padding area */
+      #ffffff 60px,                                        /* end of top padding */
+      #ffffff 60px,                                        /* start of content */
+      #ffffff calc(60px + 297mm),                          /* end of content */
+      #ffffff calc(60px + 297mm),                          /* bottom padding */
+      #ffffff calc(60px + 297mm + 60px),                   /* end of bottom padding */
+      #e0e0e0 calc(60px + 297mm + 60px),                   /* separator hairline start */
+      #e0e0e0 calc(60px + 297mm + 60px + 1px),             /* separator hairline end */
+      #f4f4f4 calc(60px + 297mm + 60px + 1px),             /* gap start */
+      #f4f4f4 calc(60px + 297mm + 60px + 32px)             /* gap end */
+    ),
+    /* Solid white fallback for first page */
+    #ffffff;
+
+  background-size:
+    100% calc(60px + 297mm + 60px + 32px),   /* shadow layer */
+    100% calc(60px + 297mm + 60px + 32px);   /* main layer */
+  background-repeat: repeat;
+
+  /* Outer page shadow for the first/lone page */
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-/* Page separators between pages (for multi-page content) */
-.paper-editor .ProseMirror > * + * {
-  margin-top: 0.5em;
+.paper-editor .ProseMirror p {
+  margin-bottom: 0.7em;
 }
 
 .paper-editor .ProseMirror h1 {
@@ -78,14 +117,11 @@
   page-break-after: avoid;
 }
 
-.paper-editor .ProseMirror p {
-  margin-bottom: 0.7em;
-}
-
-/* Don't indent certain elements */
+/* No text-indent on any elements */
 .paper-editor .ProseMirror h1,
 .paper-editor .ProseMirror h2,
 .paper-editor .ProseMirror h3,
+.paper-editor .ProseMirror p,
 .paper-editor .ProseMirror blockquote,
 .paper-editor .ProseMirror pre,
 .paper-editor .ProseMirror ul,
@@ -212,4 +248,3 @@
   font-size: 0.9em;
   border: 1px solid #e0e0e0;
 }
-
