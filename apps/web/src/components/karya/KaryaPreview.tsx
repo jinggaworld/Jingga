@@ -58,9 +58,8 @@ export function KaryaPreview({ fileUrl, fileType, judul }: KaryaPreviewProps) {
   // Shared blur overlay shown atop the preview content
   const BlurOverlay = () => (
     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none select-none">
-      {/* Heavy blur via backdrop-filter + gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/50 to-white/90 dark:from-ink/10 dark:via-ink/40 dark:to-ink/90" />
-      <div className="absolute inset-0 backdrop-blur-[12px]" />
+      {/* Heavy blur via backdrop-filter + gradient overlay (combined in one div to keep gradient crisp) */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/50 to-white/90 dark:from-ink/10 dark:via-ink/40 dark:to-ink/90 backdrop-blur-[12px]" />
       {/* Label */}
       <div className="relative z-20 text-center px-lg py-md">
         <svg className="w-10 h-10 text-ink-muted mx-auto mb-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor">
