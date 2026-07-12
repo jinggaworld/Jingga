@@ -7,11 +7,8 @@ import { signTransaction, waitForFreighter } from '@/lib/freighter';
 type ClaimState =
   | 'idle'
   | 'initiating'
-  | 'signing_create'
-  | 'submitting_create'
-  | 'initiating_claim'
-  | 'signing_claim'
-  | 'submitting_claim'
+  | 'signing'
+  | 'submitting'
   | 'success'
   | 'error';
 
@@ -85,13 +82,13 @@ export function ClaimPayment({
         body: JSON.stringify({ karya_id: karyaId }),
       });
 
-      // Step 2: Sign with Freighter
-      setState('signing_create');
+      // Step 2: Sign with Freighter (buyer signs — deposit XLM into escrow)
+      setState('signing');
       const signedXdr = await signWithFreighter(xdr);
 
-      // Step 3: Submit claimable balance
-      setState('submitting_create');
-      const { balanceId, txHash: createTxHash, explorerUrl: createExplorerUrl } = await apiRequest(`${API_BASE}/api/v1/payments/claimable/create`, {
+      // Step 3: Submit claimable balance (buyer gets immediate access)
+      setState('submitting');
+      const result = await apiRequest(`${API_BASE}/api/v1/payments/claimable/create`, {
         method: 'POST',
         body: JSON.stringify({
           signed_xdr: signedXdr,
@@ -99,30 +96,14 @@ export function ClaimPayment({
         }),
       });
 
-      // Step 4: Initiate claim
-      setState('initiating_claim');
-      const claimData = await apiRequest(`${API_BASE}/api/v1/payments/claimable/initiate-claim`, {
-        method: 'POST',
-        body: JSON.stringify({ balance_id: balanceId }),
-      });
-
-      // Step 5: Sign claim with Freighter
-      setState('signing_claim');
-      const signedClaimXdr = await signWithFreighter(claimData.xdr);
-
-      // Step 6: Submit claim
-      setState('submitting_claim');
-      const claimResult = await apiRequest(`${API_BASE}/api/v1/payments/claimable/claim`, {
-        method: 'POST',
-        body: JSON.stringify({
-          balance_id: balanceId,
-          signed_xdr: signedClaimXdr,
-        }),
-      });
-
-      setResult(claimResult);
+      setResult(result);
       setState('success');
-      onSuccess?.(claimResult);
+      onSuccess?.({
+        txHash: result.txHash,
+        accessUrl: result.accessUrl,
+        expiresAt: result.expiresAt,
+        explorerUrl: result.explorerUrl,
+      });
     } catch (err: any) {
       console.error('[ClaimPayment] Error:', err);
       setError(err.message || 'Payment failed');
@@ -226,15 +207,13 @@ export function ClaimPayment({
           <Spinner size="md" />
           <div>
             <h3 className="text-card-title text-ink">
-              {state === 'initiating' && 'Preparing claimable balance...'}
-              {state === 'signing_create' && 'Waiting for wallet confirmation...'}
-              {state === 'submitting_create' && 'Submitting transaction to Stellar...'}
-              {state === 'initiating_claim' && 'Preparing claim...'}
-              {state === 'signing_claim' && 'Waiting for claim confirmation...'}
-              {state === 'submitting_claim' && 'Processing claim...'}
+              {state === 'initiating' && 'Preparing escrow...'}
+              {state === 'signing' && 'Waiting for wallet confirmation...'}
+              {state === 'submitting' && 'Depositing to escrow...'}
             </h3>
             <p className="text-body-sm text-ink-muted">
-              {(state === 'signing_create' || state === 'signing_claim') && 'Freighter popup opened in browser'}
+              {state === 'signing' && 'Freighter popup opened in browser'}
+              {state === 'submitting' && 'Your XLM is locked in escrow on the Stellar network. The author can claim it after you get access.'}
             </p>
           </div>
         </div>
@@ -251,14 +230,15 @@ export function ClaimPayment({
       </p>
 
       <div className="bg-surface-1 p-md mb-lg text-body-sm text-ink-muted">
-        <p>Claimable Balance is Stellar's escrow mechanism. Payment will be held until the claim succeeds.</p>
+        <p><strong>How it works:</strong> You deposit XLM into a Stellar escrow (claimable balance).
+        The author can claim the payment. You get immediate access to the file.</p>
       </div>
 
       <button
         onClick={handlePurchase}
         className="w-full px-lg py-md bg-primary text-on-primary text-body font-medium hover:bg-primary-hover transition-colors"
       >
-        Create &amp; Claim Balance: {harga} XLM
+        Pay with Escrow: {harga} XLM
       </button>
     </div>
   );

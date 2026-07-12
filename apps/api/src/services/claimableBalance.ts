@@ -36,13 +36,8 @@ interface ClaimableBalanceSubmitResult {
   balanceId: string;
   txHash: string;
   explorerUrl: string;
-}
-
-interface ClaimBalanceResult {
-  txHash: string;
   accessUrl: string;
   expiresAt: string;
-  explorerUrl: string;
 }
 
 // Generate unsigned XDR for creating claimable balance
@@ -74,25 +69,26 @@ export async function initiateClaimableBalance(
 
   if (existingTx) throw new ClaimableBalanceError('ALREADY_PURCHASED');
 
-  // 3. Load issuer account
-  let issuerAccount;
+  // 3. Load buyer account
+  let buyerAccount;
   try {
-    issuerAccount = await getServer().loadAccount(karya.issuer_wallet);
+    buyerAccount = await getServer().loadAccount(buyerWallet);
   } catch (error) {
     throw new ClaimableBalanceError('TX_FAILED');
   }
 
   // 4. Build create claimable balance transaction
+  //    Buyer deposits XLM into escrow. Seller (author) can claim it.
   const amount = karya.harga.toString();
-  const memo = `JINGGA:CLAIM:${karyaId.slice(0, 8)}`;
+  const memo = `JINGGA:ESCROW:${karyaId.slice(0, 8)}`;
 
-  // Create claimant - buyer can claim unconditionally
+  // Create claimant - seller (author) can claim unconditionally
   const claimant = new Stellar.Claimant(
-    buyerWallet,
+    karya.issuer_wallet,
     Stellar.Claimant.predicateUnconditional()
   );
 
-  const transaction = new Stellar.TransactionBuilder(issuerAccount, {
+  const transaction = new Stellar.TransactionBuilder(buyerAccount, {
     fee: Stellar.BASE_FEE,
     networkPassphrase: getNetworkPassphrase(),
   })
@@ -177,19 +173,51 @@ export async function submitClaimableBalance(
     status: 'created',
   });
 
+  // 5. Record transaction (two-step pending→confirmed to avoid broken badge trigger)
+  await supabaseAdmin.from('transactions').insert({
+    karya_id: karyaId,
+    buyer_wallet: buyerWallet,
+    seller_wallet: karya.issuer_wallet,
+    jumlah: karya.harga,
+    stellar_tx_hash: result.hash,
+    status: 'pending',
+    payment_method: 'claimable_balance',
+  });
+
+  await supabaseAdmin
+    .from('transactions')
+    .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+    .eq('stellar_tx_hash', result.hash);
+
+  // 6. Update karya stats
+  await supabaseAdmin.rpc('increment_karya_sales', {
+    p_karya_id: karyaId,
+    p_amount: karya.harga,
+  });
+
+  // 7. Generate signed URL for immediate access
+  let accessUrl = '';
+  let expiresAt = '';
+  if (karya.ipfs_link) {
+    accessUrl = await getSignedUrl(karya.ipfs_link, 3600);
+    expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
+  }
+
   const explorerUrl = `https://stellar.expert/explorer/testnet/tx/${result.hash}`;
 
   return {
     balanceId,
     txHash: result.hash,
     explorerUrl,
+    accessUrl,
+    expiresAt,
   };
 }
 
 // Generate unsigned XDR for claiming a balance
 export async function initiateClaim(
   balanceId: string,
-  buyerWallet: string
+  claimerWallet: string
 ): Promise<ClaimableBalanceXdrResult> {
   if (!supabaseAdmin) throw new ClaimableBalanceError('BALANCE_NOT_FOUND');
 
@@ -198,23 +226,27 @@ export async function initiateClaim(
     .from('claimable_balances')
     .select('*')
     .eq('balance_id', balanceId)
-    .eq('buyer_wallet', buyerWallet)
     .single();
 
   if (balanceError || !balance) throw new ClaimableBalanceError('BALANCE_NOT_FOUND');
   if (balance.status === 'claimed') throw new ClaimableBalanceError('BALANCE_ALREADY_CLAIMED');
   if (balance.status === 'expired') throw new ClaimableBalanceError('BALANCE_EXPIRED');
 
-  // 2. Load buyer account
-  let buyerAccount;
+  // 2. Verify caller is the seller (only seller can claim)
+  if (claimerWallet !== balance.seller_wallet) {
+    throw new ClaimableBalanceError('BALANCE_NOT_FOUND');
+  }
+
+  // 3. Load claimer (seller) account
+  let claimerAccount;
   try {
-    buyerAccount = await getServer().loadAccount(buyerWallet);
+    claimerAccount = await getServer().loadAccount(claimerWallet);
   } catch (error) {
     throw new ClaimableBalanceError('TX_FAILED');
   }
 
-  // 3. Build claim transaction
-  const transaction = new Stellar.TransactionBuilder(buyerAccount, {
+  // 4. Build claim transaction
+  const transaction = new Stellar.TransactionBuilder(claimerAccount, {
     fee: Stellar.BASE_FEE,
     networkPassphrase: getNetworkPassphrase(),
   })
@@ -236,8 +268,8 @@ export async function initiateClaim(
 export async function submitClaim(
   signedXdr: string,
   balanceId: string,
-  buyerWallet: string
-): Promise<ClaimBalanceResult> {
+  claimerWallet: string
+): Promise<{ txHash: string; explorerUrl: string }> {
   if (!supabaseAdmin) throw new ClaimableBalanceError('BALANCE_NOT_FOUND');
 
   // 1. Deserialize and submit transaction
@@ -265,60 +297,10 @@ export async function submitClaim(
     .update({ status: 'claimed', claimed_at: new Date().toISOString() })
     .eq('balance_id', balanceId);
 
-  // 3. Get karya details for access URL
-  const { data: balance } = await supabaseAdmin
-    .from('claimable_balances')
-    .select('karya_id')
-    .eq('balance_id', balanceId)
-    .single();
-
-  let accessUrl = '';
-  let expiresAt = '';
-
-  if (balance) {
-    // 4. Record transaction (two-step pending→confirmed to avoid broken badge trigger)
-    const { data: karya } = await supabaseAdmin
-      .from('karya')
-      .select('*')
-      .eq('id', balance.karya_id)
-      .single();
-
-    if (karya) {
-      await supabaseAdmin.from('transactions').insert({
-        karya_id: balance.karya_id,
-        buyer_wallet: buyerWallet,
-        seller_wallet: karya.issuer_wallet,
-        jumlah: karya.harga,
-        stellar_tx_hash: result.hash,
-        status: 'pending',
-        payment_method: 'claimable_balance',
-      });
-
-      await supabaseAdmin
-        .from('transactions')
-        .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
-        .eq('stellar_tx_hash', result.hash);
-
-      // 5. Update karya stats
-      await supabaseAdmin.rpc('increment_karya_sales', {
-        p_karya_id: balance.karya_id,
-        p_amount: karya.harga,
-      });
-
-      // 6. Generate signed URL for file access
-      if (karya.ipfs_link) {
-        accessUrl = await getSignedUrl(karya.ipfs_link, 3600);
-        expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
-      }
-    }
-  }
-
   const explorerUrl = `https://stellar.expert/explorer/testnet/tx/${result.hash}`;
 
   return {
     txHash: result.hash,
-    accessUrl,
-    expiresAt,
     explorerUrl,
   };
 }
