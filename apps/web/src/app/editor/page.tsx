@@ -4,7 +4,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { useAuth, truncateAddress } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Layout } from '@/components/layout/Layout';
 import JinggaEditor from '@/components/editor/JinggaEditor';
 import { apiRequest } from '@/lib/api';
@@ -29,6 +29,16 @@ export default function EditorPage() {
     harga: '',
     content: '',
   });
+  const searchParams = useSearchParams();
+
+  // Collaboration room: use ?room= query param or generate a unique session ID
+  const roomId = React.useMemo(() => {
+    const fromUrl = searchParams.get('room');
+    if (fromUrl) return fromUrl;
+    // Generate a unique session ID (persists for this browser tab)
+    return 'session-' + (crypto.randomUUID?.() || Math.random().toString(36).slice(2, 10));
+  }, [searchParams]);
+
   // Collaboration (real-time co-editing via Yjs)
   const ydocRef = useRef<Y.Doc | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
@@ -38,9 +48,7 @@ export default function EditorPage() {
   useEffect(() => {
     const WS_URL = process.env.NEXT_PUBLIC_WS_URL || `ws://localhost:3001/collab`;
     const ydoc = new Y.Doc();
-    // Use a shared room so all connected users collaborate on the same document
-    const room = 'jingga-editor-live';
-    const provider = new WebsocketProvider(WS_URL, room, ydoc, {
+    const provider = new WebsocketProvider(WS_URL, roomId, ydoc, {
       connect: true,
     });
 
@@ -55,7 +63,7 @@ export default function EditorPage() {
       provider.destroy();
       ydoc.destroy();
     };
-  }, [walletAddress]);
+  }, [walletAddress, roomId]);
 
   // User color derived from wallet address for consistent cursor color
   const userColor = React.useMemo(() => {
@@ -254,6 +262,24 @@ export default function EditorPage() {
                     ({truncateAddress(walletAddress, 6)})
                   </span>
                 )}
+              </p>
+              {/* Room ID — click to copy shareable link */}
+              <p className="text-body-sm text-ink-subtle mt-xs flex items-center gap-xs">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                </svg>
+                Room: <code className="font-mono text-xs bg-surface-1 px-xs py-xxs border border-hairline">{roomId}</code>
+                <button
+                  onClick={() => {
+                    const url = `${window.location.origin}/editor?room=${roomId}`;
+                    navigator.clipboard.writeText(url);
+                    setMessage({ type: 'success', text: 'Room link copied!' });
+                  }}
+                  className="text-primary hover:underline text-caption"
+                  title="Copy room link to clipboard"
+                >
+                  Copy link
+                </button>
               </p>
             </div>
             {/* Collaboration indicator */}
