@@ -125,7 +125,8 @@ function recipientScVal(
  */
 function licenseTypeVal(type: 'exclusive' | 'non-exclusive'): StellarSdk.xdr.ScVal {
   const variant = type === 'exclusive' ? 'Exclusive' : 'NonExclusive';
-  return StellarSdk.nativeToScVal([variant], { type: 'vec' });
+  // nativeToScVal auto-detects arrays as Vec and strings as Symbol
+  return StellarSdk.nativeToScVal([variant]);
 }
 
 /**
@@ -141,7 +142,7 @@ function licenseDurationVal(duration: string): StellarSdk.xdr.ScVal {
     perpetual: 'Perpetual',
   };
   const variant = map[duration] || 'Perpetual';
-  return StellarSdk.nativeToScVal([variant], { type: 'vec' });
+  return StellarSdk.nativeToScVal([variant]);
 }
 
 // ============================================================
