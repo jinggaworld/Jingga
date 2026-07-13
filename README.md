@@ -596,7 +596,7 @@ Collaborator Royalties use a Soroban smart contract deployed on Stellar to autom
 
 **Contract address (testnet):**
 ```
-CDATTT53GBFZZZQOVMGVO63FIM6FGRXGEBIVC4I2OPOHWOTXHQOOSWGN
+CARE27GIE5INY76J2RQOKCLBM7CFXBP4SIUDRCJDHE46MPI6XJP7CAR2
 ```
 
 ### Payment Methods
