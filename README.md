@@ -3,9 +3,10 @@
 > Publication and royalty platform for independent writers, researchers, and creators across Southeast Asia. Built on Stellar: instant payments, transparent royalties, no middlemen.
 
 **🌐 Website:** [jingga-web-pi.vercel.app](https://jingga-web-pi.vercel.app)
-**🚀 API:** [jinggaapi-production.up.railway.app](https://jinggaapi-production.up.railway.app/api/v1/health)
 
 ![Jingga Web Preview](https://raw.githubusercontent.com/indonesianviking/jingga-assets/2301c2fc90e8ec42fe98d8ec519432641540ecf4/tampilan_web_new.png)
+
+![Dashboard Stats](https://raw.githubusercontent.com/indonesianviking/jingga-assets/157e56978c4b51838560b6d31acee4b8573cbbfb/stats.png)
 
 ## Table of Contents
 

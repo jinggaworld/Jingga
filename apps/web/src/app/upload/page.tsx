@@ -401,9 +401,9 @@ export default function UploadPage() {
                   {collaborators.map((collab, i) => (
                     <div
                       key={i}
-                      className="grid grid-cols-12 gap-sm items-end border border-hairline p-md"
+                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-sm items-end border border-hairline p-md"
                     >
-                      <div className="col-span-3">
+                      <div>
                         <label className="block text-caption text-ink-muted mb-xs">Wallet *</label>
                         <input
                           type="text"
@@ -413,7 +413,7 @@ export default function UploadPage() {
                           className="w-full px-xs py-xs border border-hairline bg-canvas text-ink text-body-sm focus:outline-none focus:border-primary font-mono"
                         />
                       </div>
-                      <div className="col-span-3">
+                      <div>
                         <label className="block text-caption text-ink-muted mb-xs">Name</label>
                         <input
                           type="text"
@@ -423,7 +423,7 @@ export default function UploadPage() {
                           className="w-full px-xs py-xs border border-hairline bg-canvas text-ink text-body-sm focus:outline-none focus:border-primary"
                         />
                       </div>
-                      <div className="col-span-3">
+                      <div>
                         <label className="block text-caption text-ink-muted mb-xs">Role</label>
                         <select
                           value={collab.role}
@@ -435,23 +435,23 @@ export default function UploadPage() {
                           ))}
                         </select>
                       </div>
-                      <div className="col-span-2">
-                        <label className="block text-caption text-ink-muted mb-xs">%</label>
-                        <input
-                          type="number"
-                          value={collab.persentase || ''}
-                          onChange={(e) => updateCollaborator(i, 'persentase', Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-                          placeholder="0"
-                          min="0"
-                          max="100"
-                          className="w-full px-xs py-xs border border-hairline bg-canvas text-ink text-body-sm focus:outline-none focus:border-primary"
-                        />
-                      </div>
-                      <div className="col-span-1 flex items-end pb-xs">
+                      <div className="sm:col-span-2 lg:col-span-1 grid grid-cols-[1fr_auto] gap-sm items-end">
+                        <div>
+                          <label className="block text-caption text-ink-muted mb-xs">%</label>
+                          <input
+                            type="number"
+                            value={collab.persentase || ''}
+                            onChange={(e) => updateCollaborator(i, 'persentase', Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                            placeholder="0"
+                            min="0"
+                            max="100"
+                            className="w-full px-xs py-xs border border-hairline bg-canvas text-ink text-body-sm focus:outline-none focus:border-primary"
+                          />
+                        </div>
                         <button
                           type="button"
                           onClick={() => removeCollaborator(i)}
-                          className="text-semantic-error hover:text-semantic-error/80 transition-colors"
+                          className="text-semantic-error hover:text-semantic-error/80 transition-colors pb-xs"
                           title="Remove collaborator"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
