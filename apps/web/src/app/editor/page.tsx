@@ -21,7 +21,7 @@ interface DraftData {
 }
 
 export default function EditorPage() {
-  const { user, walletAddress, isConnected, isConnecting: authLoading, isFreighterAvailable, connectFreighter, error: authError } = useAuth();
+  const { walletAddress, isConnected, isConnecting: authLoading, isFreighterAvailable, connectFreighter, error: authError } = useAuth();
   const router = useRouter();
 
   const [form, setForm] = useState<DraftData>({
@@ -48,7 +48,7 @@ export default function EditorPage() {
           return parsed.id;
         }
       }
-    } catch {}
+    } catch { /* ignore */ }
 
     // Generate a unique session ID
     return 'session-' + (crypto.randomUUID?.() || Math.random().toString(36).slice(2, 10));
@@ -70,7 +70,7 @@ export default function EditorPage() {
         const filtered = rooms.filter((r: any) => r.id !== roomId);
         filtered.unshift({ id: roomId, name: roomId.length > 20 ? roomId.slice(0, 20) + '...' : roomId, lastAccessed: Date.now() });
         localStorage.setItem('jingga_recent_rooms', JSON.stringify(filtered.slice(0, 10)));
-      } catch {}
+      } catch { /* ignore */ }
     }
   }, [roomId]);
 
@@ -183,7 +183,7 @@ export default function EditorPage() {
         const rooms = JSON.parse(raw).filter((r: any) => r.id !== roomId);
         localStorage.setItem('jingga_recent_rooms', JSON.stringify(rooms));
       }
-    } catch {}
+    } catch { /* ignore */ }
 
     setCollabStatus('disconnected');
     setLeaving(false);

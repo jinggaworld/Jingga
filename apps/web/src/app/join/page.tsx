@@ -94,7 +94,7 @@ function extractRoomId(input: string): string | null {
 
 export default function JoinPage() {
   const router = useRouter();
-  const { isConnected, walletAddress } = useAuth();
+  const { walletAddress } = useAuth();
 
   const [sessionId, setSessionId] = useState('');
   const [recentRooms, setRecentRooms] = useState<CachedRoom[]>([]);

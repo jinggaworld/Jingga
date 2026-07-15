@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Layout } from '@/components/layout/Layout';
 import { Spinner } from '@/components/ui/Spinner';
 import { Badge } from '@/components/ui/Badge';
@@ -45,12 +45,6 @@ interface LicenseRecord {
   total_resale_volume: number;
 }
 
-interface LicensesResponse {
-  licenses: LicenseRecord[];
-  total_licenses: number;
-  total_revenue: number;
-}
-
 type PurchaseState = 'idle' | 'initiating' | 'signing' | 'confirming' | 'success' | 'error';
 
 // ============================================================
@@ -78,7 +72,6 @@ const DURATION_OPTIONS: { value: LicenseDuration; label: string; description: st
 
 export default function LicensePage() {
   const params = useParams();
-  const router = useRouter();
   const { isConnected, isConnecting: authLoading, isFreighterAvailable, connectFreighter, walletAddress } = useAuth();
 
   // Karya state
