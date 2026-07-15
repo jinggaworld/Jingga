@@ -25,9 +25,10 @@ COPY apps/api/package.json ./apps/api/
 RUN pnpm install --frozen-lockfile
 
 # Copy source
+COPY packages/shared/tsconfig.json ./packages/shared/
 COPY packages/shared/src ./packages/shared/src/
-COPY apps/api/src ./apps/api/src/
 COPY apps/api/tsconfig.json ./apps/api/
+COPY apps/api/src ./apps/api/src/
 
 # Build shared → then api
 RUN pnpm --filter @jingga/shared build
