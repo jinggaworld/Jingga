@@ -25,9 +25,23 @@ import { startCollabServer } from './ws';
 const app: express.Express = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Middleware — CORS allowlist
+const ALLOWED_ORIGINS = [
+  process.env.CORS_ORIGIN,
+  'http://localhost:3000',
+  'https://jingga-web-pi.vercel.app',
+].filter(Boolean) as string[];
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.some((o) => origin === o)) {
+      return callback(null, true);
+    }
+    console.warn('[CORS] Blocked origin:', origin);
+    callback(null, false);
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '50mb' }));
