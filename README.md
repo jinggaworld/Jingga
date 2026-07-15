@@ -8,7 +8,11 @@
 
 ![Dashboard Stats](https://raw.githubusercontent.com/indonesianviking/jingga-assets/157e56978c4b51838560b6d31acee4b8573cbbfb/stats.png)
 
-[![Jingga Demo Video](https://img.youtube.com/vi/HEKiUCdY9cM/0.jpg)](https://youtu.be/HEKiUCdY9cM)
+<p align="center">
+  <a href="https://youtu.be/HEKiUCdY9cM" target="_blank">
+    <img src="https://img.youtube.com/vi/HEKiUCdY9cM/0.jpg" alt="Jingga Demo Video" width="640">
+  </a>
+</p>
 
 ## Table of Contents
 
